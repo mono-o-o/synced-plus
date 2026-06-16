@@ -261,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const validateStartTime = () => {
             const prevCard = lineCard.previousElementSibling;
             let currStartSec = parseTime(startInput.value);
+
             if (prevCard && prevCard.classList.contains('line-card')) {
                 const prevEndSec = parseTime(prevCard.querySelector('.line-end').value);
                 if (currStartSec < prevEndSec) {
@@ -268,14 +269,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     currStartSec = prevEndSec;
                 }
             }
+
             const currEndSec = parseTime(endInput.value);
-            if (currEndSec > 0 && currStartSec > currEndSec) startInput.value = formatTime(currEndSec);
+            if (currEndSec > 0 && currStartSec > currEndSec) {
+                endInput.value = formatTime(currStartSec);
+                endInput.dispatchEvent(new Event('blur'));
+            }
         }
 
         const validateEndTime = () => {
             const currStartSec = parseTime(startInput.value);
-            const currEndSec = parseTime(endInput.value);
-            if (currEndSec > 0 && currEndSec < currStartSec) endInput.value = formatTime(currStartSec);
+            let currEndSec = parseTime(endInput.value);
+
+            if (currEndSec > 0 && currEndSec < currStartSec) {
+                endInput.value = formatTime(currStartSec);
+                currEndSec = currStartSec;
+            }
+
+            const nextCard = lineCard.nextElementSibling;
+            if (nextCard && nextCard.classList.contains('line-card')) {
+                const nextStartInput = nextCard.querySelector('.line-start');
+                const nextStartSec = parseTime(nextStartInput.value);
+                if (currEndSec > nextStartSec) {
+                    nextStartInput.value = formatTime(currEndSec);
+                    nextStartInput.dispatchEvent(new Event('blur'));
+                }
+            }
         }
 
         startInput.addEventListener('blur', validateStartTime);
