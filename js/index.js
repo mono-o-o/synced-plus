@@ -261,6 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const validateStartTime = () => {
             const prevCard = lineCard.previousElementSibling;
             let currStartSec = parseTime(startInput.value);
+            const duration = wavesurfer.getDuration();
+
+            if (duration > 0 && currStartSec > duration) {
+                currStartSec = duration;
+                startInput.value = formatTime(duration);
+            }
 
             if (prevCard && prevCard.classList.contains('line-card')) {
                 const prevEndSec = parseTime(prevCard.querySelector('.line-end').value);
@@ -268,6 +274,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     startInput.value = formatTime(prevEndSec);
                     currStartSec = prevEndSec;
                 }
+            }
+
+            const firstWord = lineCard.querySelector('.word-start');
+            if (firstWord) {
+                firstWord.value = formatTime(currStartSec);
+                firstWord.dispatchEvent(new Event('blur'));
             }
 
             const currEndSec = parseTime(endInput.value);
@@ -280,6 +292,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const validateEndTime = () => {
             const currStartSec = parseTime(startInput.value);
             let currEndSec = parseTime(endInput.value);
+            const duration = wavesurfer.getDuration();
+
+            if (duration > 0 && currEndSec > duration) {
+                currEndSec = duration;
+                endInput.value = formatTime(duration);
+            }
 
             if (currEndSec > 0 && currEndSec < currStartSec) {
                 endInput.value = formatTime(currStartSec);
@@ -341,7 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
             wordContainer.innerHTML = '';
             displayContainer.innerHTML = '';
 
-            words.forEach(word => {
+            words.forEach((word, index) => {
+                const defaultWordTime = index === 0 ? startInput.value : '';
                 const displaySpan = document.createElement('span');
                 displaySpan.textContent = word;
                 displayContainer.appendChild(displaySpan);
@@ -351,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 wordCard.innerHTML = `
                     <span class="word-text" title="Jump to word">${word}</span>
                     <div class="time-field">
-                        <input type="text" class="time-input word-start" placeholder="00:00.00">
+                        <input type="text" class="time-input word-start" placeholder="00:00.00" value="${defaultWordTime}">
                         <button type="button" class="time-btn get-word-btn">${setTimeIcon}</button>
                     </div>
                 `;
@@ -360,7 +379,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 const getWordBtn = wordCard.querySelector('.get-word-btn');
                 enforceFormat(wordTimeInput);
 
-                getWordBtn.addEventListener('click', () => setTime(wordTimeInput));
+                const validateWordTime = () => {
+                    let wordSec = parseTime(wordTimeInput.value);
+                    const lineStartSec = parseTime(startInput.value);
+                    const lineEndSec = parseTime(endInput.value);
+                    const duration = wavesurfer.getDuration();
+
+                    if (duration > 0 && wordSec > duration) {
+                        wordSec = duration;
+                        wordTimeInput.value = formatTime(duration);
+                    }
+
+                    const prevWord = wordCard.previousElementSibling;
+                    if (prevWord && prevWord.classList.contains('word-card')) {
+                        const prevWordSec = parseTime(prevWord.querySelector('.word-start').value);
+                        if (wordSec< prevWordSec) {
+                            wordSec = prevWordSec;
+                            wordTimeInput.value = formatTime(prevWordSec);
+                        }
+                    } else {
+                        if (wordSec < lineStartSec) {
+                            wordSec = lineStartSec;
+                            wordTimeInput.value = formatTime(lineStartSec);
+                        }
+                    }
+
+                    if (lineEndSec > 0 && wordSec > lineEndSec) {
+                        wordSec = lineEndSec;
+                        wordTimeInput.value = formatTime(lineEndSec);
+                    }
+
+                    const nextWord = wordCard.nextElementSibling;
+                    if (nextWord && nextWord.classList.contains('word-card')) {
+                        const nextWordInput = nextWord.querySelector('.word-start');
+                        const nextWordSec = parseTime(nextWordInput.value);
+                        if (wordSec > nextWordSec) {
+                            nextWordInput.value = formatTime(wordSec);
+                            nextWordInput.dispatchEvent(new Event('blur'));
+                        }
+                    }
+                }
+
+                wordTimeInput.addEventListener('blur', validateWordTime);
+                getWordBtn.addEventListener('click', () => {
+                    setTime(wordTimeInput);
+                    validateWordTime();
+                });
 
                 wordCard.addEventListener('click', (e) => {
                     if (e.target.closest('input') || e.target.closest('button')) return;
