@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ELRC Creator | synced+</title>
+    <link rel="icon" type="image/png" href="img/synced-plus-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/hover.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/zoom.min.js"></script>
+    <meta name="description" content="A minimal, browser-based ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
+    <meta name="keywords" content="ELRC, LRC, lyrics, lyrics sync, lyrics creator, lyrics generator, LRC generator, ELRC generator, synced lyrics, timed lyrics">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ELRC Creator | synced+">
+    <meta property="og:description" content="A minimal, browser-based ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
+</head>
+<body>
+<header>
+    <h1 class="title">synced<span class="accent">+</span></h1>
+    <div>
+        <button type="button" id="themeSwitch" title="Switch theme">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20" />
+            </svg>
+        </button>
+        <div class="header-btn-wrapper">
+            <label id="importAudio" title="Open audio file">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M11 19h2v-4.175l1.6 1.6L16 15l-4-4l-4 4l1.425 1.4L11 14.825zm-5 3q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h8l6 6v12q0 .825-.587 1.413T18 22zm7-13V4H6v16h12V9zM6 4v5zv16z" />
+                </svg>
+                Open
+                <input type="file" id="audioFile" accept="audio/*" style="display: none">
+            </label>
+            <button type="button" id="exportELRC" title="Export ELRC">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z" />
+                </svg>
+                Export
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="track-info">
+    <div class="track-info-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+            <path style="fill: var(--accent-primary)" d="M11 17h2v-6h-2zm1.713-8.287Q13 8.425 13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9t.713-.288M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />
+        </svg>
+        <p>TRACK INFO</p>
+    </div>
+    <div class="track-info-field-wrapper">
+        <div class="info-field">
+            <label for="trackTitle">Name:</label>
+            <input type="text" id="trackTitle" placeholder="Track Title" title="[ti:]">
+        </div>
+        <div class="info-field">
+            <label for="trackArtist">Artist:</label>
+            <input type="text" id="trackArtist" placeholder="Artist" title="[ar:]">
+        </div>
+        <div class="info-field">
+            <label for="trackAlbum">Album:</label>
+            <input type="text" id="trackAlbum" placeholder="Album" title="[al:]">
+        </div>
+        <div class="info-field">
+            <label for="offset">Offset:</label>
+            <input type="number" id="offset" value="0" title="[offset:]">
+            <span>ms</span>
+        </div>
+    </div>
+</div>
+
+<div class="preview-header">
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+        <path style="fill: var(--accent-primary)" d="m8 18l-6-6l6-6l1.425 1.425l-4.6 4.6L9.4 16.6zm8 0l-1.425-1.425l4.6-4.6L14.6 7.4L16 6l6 6z" />
+    </svg>
+    <p>ELRC Preview</p>
+</div>
+
+<div class="workspace">
+    <div class="waveform-wrapper">
+        <div id="waveform"></div>
+        <div class="playback-time">
+            <span id="currentTime"></span>
+            <span id="duration"></span>
+        </div>
+    </div>
+    <div class="playback-controls-wrapper">
+        <div class="playback-controls">
+            <button type="button" id="rewindBtn" title="Rewind 1s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="m19.95 16.975l-6.2-4.15q-.225-.15-.337-.362T13.3 12t.113-.462t.337-.363l6.2-4.15q.125-.1.275-.125t.275-.025q.4 0 .7.275t.3.725v8.25q0 .45-.3.725t-.7.275q-.125 0-.275-.025t-.275-.125m-10 0l-6.2-4.15q-.225-.15-.337-.362T3.3 12t.113-.462t.337-.363l6.2-4.15q.125-.1.275-.125t.275-.025q.4 0 .7.275t.3.725v8.25q0 .45-.3.725t-.7.275q-.125 0-.275-.025t-.275-.125M9.5 14.25v-4.5L6.1 12zm10 0v-4.5L16.1 12z" />
+                </svg>
+            </button>
+            <button type="button" id="playPauseBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 24 24">
+                    <path class="play-icon" fill="currentColor" d="M8 17.175V6.825q0-.425.3-.713t.7-.287q.125 0 .263.037t.262.113l8.15 5.175q.225.15.338.375t.112.475t-.112.475t-.338.375l-8.15 5.175q-.125.075-.262.113T9 18.175q-.4 0-.7-.288t-.3-.712" />
+                    <path class="pause-icon" fill="currentColor" d="M16 19q-.825 0-1.412-.587T14 17V7q0-.825.588-1.412T16 5t1.413.588T18 7v10q0 .825-.587 1.413T16 19m-8 0q-.825 0-1.412-.587T6 17V7q0-.825.588-1.412T8 5t1.413.588T10 7v10q0 .825-.587 1.413T8 19" />
+                </svg>
+            </button>
+            <button type="button" id="fastForwardBtn" title="Fast-forward 1s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M2.5 16.125v-8.25q0-.45.3-.725t.7-.275q.125 0 .275.025t.275.125l6.2 4.15q.225.15.338.363T10.7 12t-.112.463t-.338.362l-6.2 4.15q-.125.1-.275.125t-.275.025q-.4 0-.7-.275t-.3-.725m10 0v-8.25q0-.45.3-.725t.7-.275q.125 0 .275.025t.275.125l6.2 4.15q.225.15.338.363T20.7 12t-.112.463t-.338.362l-6.2 4.15q-.125.1-.275.125t-.275.025q-.4 0-.7-.275t-.3-.725m-8-1.875L7.9 12L4.5 9.75zm10 0L17.9 12l-3.4-2.25z" />
+                </svg>
+            </button>
+        </div>
+        <div class="volume-wrapper">
+            <div id="muteBtn" title="Mute">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                    <path class="full-volume" fill="currentColor" d="M19 11.975q0-2.075-1.1-3.787t-2.95-2.563q-.375-.175-.55-.537t-.05-.738q.15-.4.538-.575t.787 0Q18.1 4.85 19.55 7.063T21 11.974t-1.45 4.913t-3.875 3.287q-.4.175-.788 0t-.537-.575q-.125-.375.05-.737t.55-.538q1.85-.85 2.95-2.562t1.1-3.788M7 15H4q-.425 0-.712-.288T3 14v-4q0-.425.288-.712T4 9h3l3.3-3.3q.475-.475 1.088-.213t.612.938v11.15q0 .675-.612.938T10.3 18.3zm9.5-3q0 1.05-.475 1.988t-1.25 1.537q-.25.15-.513.013T14 15.1V8.85q0-.3.263-.437t.512.012q.775.625 1.25 1.575t.475 2M10 8.85L7.85 11H5v2h2.85L10 15.15zM7.5 12" />
+                    <path class="half-volume" fill="currentColor" d="M9 15H6q-.425 0-.712-.288T5 14v-4q0-.425.288-.712T6 9h3l3.3-3.3q.475-.475 1.088-.213t.612.938v11.15q0 .675-.612.938T12.3 18.3zm9.5-3q0 1.05-.475 1.988t-1.25 1.537q-.25.15-.512.013T16 15.1V8.85q0-.3.263-.437t.512.012q.775.625 1.25 1.575t.475 2M12 8.85L9.85 11H7v2h2.85L12 15.15zM9.5 12" />
+                    <path class="muted" fill="currentColor" d="M11 15H8q-.425 0-.712-.288T7 14v-4q0-.425.288-.712T8 9h3l3.3-3.3q.475-.475 1.088-.213t.612.938v11.15q0 .675-.612.938T14.3 18.3zm-2-2h2.85L14 15.15v-6.3L11.85 11H9zm2.5-1" />
+                </svg>
+            </div>
+            <div id="volumeSlider">
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+            </div>
+        </div>
+    </div>
+    <div class="main-workspace">
+        <div id="lines"></div>
+        <button type="button" id="addLineBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M11.288 20.713Q11 20.425 11 20v-7H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7V4q0-.425.288-.712T12 3t.713.288T13 4v7h7q.425 0 .713.288T21 12t-.288.713T20 13h-7v7q0 .425-.288.713T12 21t-.712-.288" />
+            </svg>
+            Add Line
+        </button>
+    </div>
+</div>
+
+<div class="preview"></div>
+<script src="js/index.js"></script>
+</body>
+</html>
