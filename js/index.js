@@ -56,11 +56,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const audioFile = document.getElementById('audioFile');
+    audioFile.addEventListener('click', (e) => {
+        const existingLines = document.querySelectorAll('.line-card');
+        if (existingLines.length > 0) {
+            if (confirm("Workspace is not empty. Load a new audio file?")) {
+                existingLines.forEach(l => l.remove());
+                if (wavesurfer.getDuration() > 0) wavesurfer.setTime(0);
+                document.dispatchEvent(new Event('input', {bubbles:true}));
+            } else e.preventDefault();
+        }
+    })
+
     audioFile.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const blobURL = URL.createObjectURL(file);
             wavesurfer.load(blobURL);
+            window.jsmediatags.read(file, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    if (tags.title) document.getElementById('trackTitle').value = tags.title;
+                    if (tags.artist) document.getElementById('trackArtist').value = tags.artist;
+                    if (tags.album) document.getElementById('trackAlbum').value = tags.album;
+                    document.getElementById('trackTitle').dispatchEvent(new Event('input', {bubbles:true}));
+                }
+            })
         }
     });
 
@@ -68,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         duration.textContent = formatTime(wavesurfer.getDuration());
         currTime.textContent = formatTime(0);
         addLineBtn.disabled = false;
+        addLineBtn.removeAttribute('title');
     });
 
     const parseTime = (timeString) => {
@@ -83,31 +104,47 @@ document.addEventListener('DOMContentLoaded', () => {
             animFrameId = null;
             currTime.textContent = formatTime(currentTime);
 
+            document.querySelectorAll('.active-preview-word').forEach(w => w.classList.remove('active-preview-word'));
+
             const lines = document.querySelectorAll('.line-card');
-            lines.forEach(line => {
+            lines.forEach((line,index) => {
                 const start = parseTime(line.querySelector('.line-start').value);
-                const end = parseTime(line.querySelector('.line-end').value);
+                const end = (index + 1 < lines.length) ? parseTime(lines[index+1].querySelector('.line-start').value) : wavesurfer.getDuration();
                 if (currentTime >= start && currentTime < end) {
                     line.classList.add('current-line');
 
                     const wordCards = line.querySelectorAll('.word-card');
                     const displaySpans = line.querySelectorAll('.lyric-display span');
 
-                    for (let i = 0; i < wordCards.length; i++) {
-                        const wordStart = parseTime(wordCards[i].querySelector('.word-start').value);
-                        let wordEnd = end;
-                        if (i + 1 < wordCards.length) {
-                            const nextWordStart = parseTime(wordCards[i+1].querySelector('.word-start').value);
-                            if (nextWordStart > 0) wordEnd = nextWordStart;
-                        }
-                        const spanEl = displaySpans[i];
+                    const prevLineSpan = document.getElementById(`prev-l${index}`);
+                    if (prevLineSpan && wordCards.length === 0) prevLineSpan.classList.add('active-preview-word');
 
-                        if (wordStart > 0 && currentTime >= wordStart && currentTime < wordEnd) {
-                            wordCards[i].classList.add('active-word-card');
-                            if (spanEl) spanEl.classList.add('active-word');
-                        } else {
-                            wordCards[i].classList.remove('active-word-card');
-                            if (spanEl) spanEl.classList.remove('active-word');
+                    for (let i = 0; i < wordCards.length; i++) {
+                        let activeTimestamp = -1;
+                        for (let i = wordCards.length - 1; i >= 0; i--) {
+                            const wsStr = wordCards[i].querySelector('.word-start').value.trim();
+                            if (wsStr !== '') {
+                                const ws = parseTime(wsStr);
+                                if (currentTime >= ws) {
+                                    activeTimestamp = ws;
+                                    break;
+                                }
+                            }
+                        }
+
+                        for (let i = 0; i < wordCards.length; i++) {
+                            const wsStr = wordCards[i].querySelector('.word-start').value.trim();
+                            const spanEl = displaySpans[i];
+
+                            if (wsStr !== '' && parseTime(wsStr) === activeTimestamp) {
+                                wordCards[i].classList.add('active-word-card');
+                                if (spanEl) spanEl.classList.add('active-word');
+                                const prevWordSpan = document.getElementById(`prev-l${index}-w${i}`);
+                                if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
+                            } else {
+                                wordCards[i].classList.remove('active-word-card');
+                                if (spanEl) spanEl.classList.remove('active-word');
+                            }
                         }
                     }
                 } else {
@@ -136,6 +173,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const volumeSlider = document.getElementById('volume');
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {muteBtn.classList.add('vol-full')}
+
+    document.addEventListener('keydown', (e) => {
+        const activeInput = document.activeElement.tagName.toLowerCase();
+        if (activeInput === 'input') return;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            document.getElementById('playPauseBtn').click();
+        } else if (e.code === 'ArrowLeft') document.getElementById('rewindBtn').click();
+        else if (e.code === 'ArrowRight') document.getElementById('fastForwardBtn').click();
+    });
 
     const updSliderFill = (el, val) => {
         const min = el.min || 0;
@@ -180,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const linesContainer = document.getElementById('lines');
     const addLineBtn = document.getElementById('addLineBtn');
     addLineBtn.disabled = true;
+    addLineBtn.title = "Please open an audio file first!";
     const setTimeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="m12 11.6l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T10 11.975V8q0-.425.288-.712T11 7t.713.288T12 8zM18 6h-2q-.425 0-.712-.287T15 5t.288-.712T16 4h2V2q0-.425.288-.712T19 1t.713.288T20 2v2h2q.425 0 .713.288T23 5t-.288.713T22 6h-2v2q0 .425-.288.713T19 9t-.712-.288T18 8zM7.488 20.3q-1.638-.7-2.863-1.925T2.7 15.512T2 12t.7-3.512t1.925-2.863T7.488 3.7T11 3q.275 0 .513.013t.512.062q.425 0 .713.288t.287.712t-.288.713t-.712.287q-.275 0-.513-.038T11 5Q8.05 5 6.025 7.025T4 12t2.025 4.975T11 19t4.975-2.025T18 12q0-.425.288-.712T19 11t.713.288T20 12q0 1.875-.7 3.513t-1.925 2.862t-2.863 1.925T11 21t-3.512-.7" /></svg>`
 
     const enforceFormat = (el) => {
@@ -207,7 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let defaultTime = "00:00.00"
         if (existingLines.length > 0) {
             const lastLine = existingLines[existingLines.length - 1];
-            defaultTime = lastLine.querySelector('.line-end').value || '00:00.00';
+            const lastWords = lastLine.querySelectorAll('.word-start');
+            defaultTime = lastWords.length > 0 ? lastWords[lastWords.length-1].value : lastLine.querySelector('.line-start').value || "00:00.00";
         }
 
         const lineCard = document.createElement('div');
@@ -219,10 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="time-field" title="Line start time">
                         <input type="text" class="time-input line-start" placeholder="00:00.00" value="${defaultTime}">
                         <button type="button" class="time-btn get-start-btn">${setTimeIcon}</button>
-                    </div>
-                    <div class="time-field" title="Line end time">
-                        <input type="text" class="time-input line-end" placeholder="00:00.00" value="${defaultTime}">
-                        <button type="button" class="time-btn get-end-btn">${setTimeIcon}</button>
                     </div>
                 </div>
                 <div class="lyric-wrapper">
@@ -245,11 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         const startInput = lineCard.querySelector('.line-start');
-        const endInput = lineCard.querySelector('.line-end');
         enforceFormat(startInput);
-        enforceFormat(endInput);
         const getStartBtn = lineCard.querySelector('.get-start-btn');
-        const getEndBtn = lineCard.querySelector('.get-end-btn');
         const lyricInput = lineCard.querySelector('.lyric-input');
         const playLineBtn = lineCard.querySelector('.play-line-btn');
         const deleteBtn = lineCard.querySelector('.delete-btn');
@@ -269,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const prevCard = lineCard.previousElementSibling;
             let currStartSec = parseTime(startInput.value);
             const duration = wavesurfer.getDuration();
+            const nextCard = lineCard.nextElementSibling;
 
             if (duration > 0 && currStartSec > duration) {
                 currStartSec = duration;
@@ -276,10 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (prevCard && prevCard.classList.contains('line-card')) {
-                const prevEndSec = parseTime(prevCard.querySelector('.line-end').value);
-                if (currStartSec < prevEndSec) {
-                    startInput.value = formatTime(prevEndSec);
-                    currStartSec = prevEndSec;
+                const prevWords = prevCard.querySelectorAll('.word-start');
+                const prevLimit = prevWords.length > 0 ? parseTime(prevWords[prevWords.length-1].value) : parseTime(prevCard.querySelector('.line-start').value);
+                if (currStartSec < prevLimit) {
+                    startInput.value = formatTime(prevLimit);
+                    currStartSec = prevLimit;
                 }
             }
 
@@ -289,49 +333,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstWord.dispatchEvent(new Event('blur'));
             }
 
-            const currEndSec = parseTime(endInput.value);
-            if (currEndSec > 0 && currStartSec > currEndSec) {
-                endInput.value = formatTime(currStartSec);
-                endInput.dispatchEvent(new Event('blur'));
-            }
-        }
-
-        const validateEndTime = () => {
-            const currStartSec = parseTime(startInput.value);
-            let currEndSec = parseTime(endInput.value);
-            const duration = wavesurfer.getDuration();
-
-            if (duration > 0 && currEndSec > duration) {
-                currEndSec = duration;
-                endInput.value = formatTime(duration);
-            }
-
-            if (currEndSec > 0 && currEndSec < currStartSec) {
-                endInput.value = formatTime(currStartSec);
-                currEndSec = currStartSec;
-            }
-
-            const nextCard = lineCard.nextElementSibling;
             if (nextCard && nextCard.classList.contains('line-card')) {
                 const nextStartInput = nextCard.querySelector('.line-start');
-                const nextStartSec = parseTime(nextStartInput.value);
-                if (currEndSec > nextStartSec) {
-                    nextStartInput.value = formatTime(currEndSec);
+                if (currStartSec > parseTime(nextStartInput.value)) {
+                    nextStartInput.value = formatTime(currStartSec);
                     nextStartInput.dispatchEvent(new Event('blur'));
                 }
             }
         }
 
         startInput.addEventListener('blur', validateStartTime);
-        endInput.addEventListener('blur', validateEndTime);
-
         getStartBtn.addEventListener('click', () => {
             setTime(startInput);
             validateStartTime();
-        });
-        getEndBtn.addEventListener('click', () => {
-            setTime(endInput);
-            validateEndTime();
         });
 
         playLineBtn.addEventListener('click', (e) => {
@@ -343,7 +357,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.currentTarget.blur();
         });
 
-        deleteBtn.addEventListener('click', () => {lineCard.remove();})
+        deleteBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to delete this line?")) {
+                lineCard.remove();
+                document.dispatchEvent(new Event('input', {bubbles:true}))
+            }
+        });
 
         expandBtn.addEventListener('click', () => {
             const isHidden = wordContainer.style.display === 'none';
@@ -390,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const validateWordTime = () => {
                     let wordSec = parseTime(wordTimeInput.value);
                     const lineStartSec = parseTime(startInput.value);
-                    const lineEndSec = parseTime(endInput.value);
+                    const nextCard = lineCard.nextElementSibling;
                     const duration = wavesurfer.getDuration();
 
                     if (duration > 0 && wordSec > duration) {
@@ -405,25 +424,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             wordSec = prevWordSec;
                             wordTimeInput.value = formatTime(prevWordSec);
                         }
-                    } else {
-                        if (wordSec < lineStartSec) {
-                            wordSec = lineStartSec;
-                            wordTimeInput.value = formatTime(lineStartSec);
-                        }
-                    }
-
-                    if (lineEndSec > 0 && wordSec > lineEndSec) {
-                        wordSec = lineEndSec;
-                        wordTimeInput.value = formatTime(lineEndSec);
+                    } else if (wordSec < lineStartSec) {
+                        wordSec = lineStartSec;
+                        wordTimeInput.value = formatTime(lineStartSec);
                     }
 
                     const nextWord = wordCard.nextElementSibling;
                     if (nextWord && nextWord.classList.contains('word-card')) {
                         const nextWordInput = nextWord.querySelector('.word-start');
-                        const nextWordSec = parseTime(nextWordInput.value);
-                        if (wordSec > nextWordSec) {
+                        if (wordSec > parseTime(nextWordInput.value)) {
                             nextWordInput.value = formatTime(wordSec);
                             nextWordInput.dispatchEvent(new Event('blur'));
+                        }
+                    } else if (nextCard && nextCard.classList.contains('line-card')) {
+                        const nextStartInput = nextCard.querySelector('.line-start');
+                        if (wordSec > parseTime(nextStartInput.value)) {
+                            nextStartInput.value = formatTime(wordSec);
+                            nextStartInput.dispatchEvent(new Event('blur'));
                         }
                     }
                 }
@@ -437,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 wordCard.addEventListener('click', (e) => {
                     if (e.target.closest('input') || e.target.closest('button')) return;
                     const wordStartSec = parseTime(wordTimeInput.value);
-                    if (wordStartSec > 0 && wavesurfer.getDuration() > 0) {
+                    if (wordStartSec >= 0 && wavesurfer.getDuration() > 0) {
                         wavesurfer.setTime(wordStartSec);
                         wavesurfer.play();
                     }
@@ -451,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const previewContainer = document.querySelector('.preview')
 
-    const generateELRC = () => {
+    const generateELRC = (forPreview = false) => {
         const title = document.getElementById('trackTitle').value.trim();
         const artist = document.getElementById('trackArtist').value.trim();
         const album = document.getElementById('trackAlbum').value.trim();
@@ -461,27 +478,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (artist) elrc += `[ar:${artist}]\n`;
         if (album) elrc += `[al:${album}]\n`;
 
-        document.querySelectorAll('.line-card').forEach(l => {
+        document.querySelectorAll('.line-card').forEach((l, lineI) => {
             const start = l.querySelector('.line-start').value;
             const words = l.querySelectorAll('.word-card');
 
             if (words.length > 0) {
                 let lineStr = `[${start}]`;
-                words.forEach(w => {
-                    const time = w.querySelector('.word-start').value;
+                words.forEach((w, wordI) => {
+                    const time = w.querySelector('.word-start').value.trim();
                     const text = w.querySelector('.word-text').textContent;
-                    lineStr += `<${time}>${text} `;
+                    if (forPreview) lineStr += `<span id="prev-l${lineI}-w${wordI}">${time ? `&lt;${time}&gt;` : ''}${text}</span> `;
+                    else lineStr += `${time ? `<${time}>` : ''}${text} `;
                 });
                 elrc += lineStr.trimEnd() + '\n';
             } else {
                 const text = l.querySelector('.lyric-input').value.trim();
-                if (text) elrc += `[${start}]${text}\n`;
+                if (text) {
+                    if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
+                    else elrc += `[${start}]${text}\n`;
+                }
             }
         });
         return elrc;
     }
 
-    const updatePreview = () => previewContainer.textContent = generateELRC();
+    const updatePreview = () => previewContainer.innerHTML = generateELRC(true);
 
     document.addEventListener('input', updatePreview);
     document.addEventListener('click', updatePreview);

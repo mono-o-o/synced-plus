@@ -242,23 +242,7 @@ header button {
     border-radius: 0.1rem;
     transition: border-color var(--transition-fast);
     outline: none;
-}
-
-.info-field input[type="text"] {
-    width: 10rem;
-}
-
-.info-field input[type="number"] {
-    width: 5rem;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    font-family: 'Fira Code', monospace;
-}
-
-.info-field input[type="number"]::-webkit-inner-spin-button,
-.info-field input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+    width: 15rem;
 }
 
 .info-field input:focus {
@@ -631,8 +615,8 @@ header button {
     transition: all var(--transition-fast);
 }
 
-.line-card.current-line:not(.is-editing) .lyric-input {display: none;}
-.line-card.current-line:not(.is-editing) .lyric-display {display: flex;}
+.line-card.current-line:not(.is-editing) .lyric-input:not(:placeholder-shown) {display: none;}
+.line-card.current-line:not(.is-editing) .lyric-input:not(:placeholder-shown) + .lyric-display {display: flex;}
 
 .line-card.current-line .word-sync-container {background: var(--accent-bg);}
 
@@ -718,6 +702,12 @@ header button {
     font-family: 'Fira Code', monospace;
     color: var(--accent-txt);
     white-space: pre-wrap;
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     line-height: 1.8;
+}
+
+.active-preview-word {
+    color: var(--accent-primary);
+    text-shadow: 0 0 5px var(--accent-secondary);
+    transition: color var(--transition-fast);
 }
