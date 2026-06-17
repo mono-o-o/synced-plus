@@ -1,0 +1,182 @@
+[
+  {
+    "id": "default",
+    "name": "Digital Green",
+    "colors": {
+      "--accent-primary": "#acf7c1",
+      "--accent-secondary": "#324a3a",
+      "--accent-tertiary": "#7da887",
+      "--accent-bg": "#121614",
+      "--accent-srf": "#1a201c",
+      "--accent-txt": "#e2e9e4"
+    }
+  },
+  {
+    "id": "gruvbox-material-light",
+    "name": "Gruvbox Material Light",
+    "colors": {
+      "--accent-primary": "#b57614",
+      "--accent-secondary": "#e9b872",
+      "--accent-tertiary": "#8f3f71",
+      "--accent-bg": "#fbf1c7",
+      "--accent-srf": "#f4e8c1",
+      "--accent-txt": "#3c3836"
+    }
+  },
+  {
+    "id": "gruvbox-material-dark",
+    "name": "Gruvbox Material Dark",
+    "colors": {
+      "--accent-primary": "#ea993c",
+      "--accent-secondary": "#4f5b58",
+      "--accent-tertiary": "#d3869b",
+      "--accent-bg": "#282828",
+      "--accent-srf": "#32302f",
+      "--accent-txt": "#dfd9c2"
+    }
+  },
+  {
+    "id": "atom-one-dark",
+    "name": "Atom One Dark",
+    "colors": {
+      "--accent-primary": "#61afef",
+      "--accent-secondary": "#3e4451",
+      "--accent-tertiary": "#c678dd",
+      "--accent-bg": "#282c34",
+      "--accent-srf": "#21252b",
+      "--accent-txt": "#abb2bf"
+    }
+  },
+  {
+    "id": "atom-one-light",
+    "name": "Atom One Light",
+    "colors": {
+      "--accent-primary": "#4078f2",
+      "--accent-secondary": "#e5e5e6",
+      "--accent-tertiary": "#a626a4",
+      "--accent-bg": "#fafafa",
+      "--accent-srf": "#f0f0f1",
+      "--accent-txt": "#383a42"
+    }
+  },
+  {
+    "id": "dracula",
+    "name": "Dracula",
+    "colors": {
+      "--accent-primary": "#ff79c6",
+      "--accent-secondary": "#44475a",
+      "--accent-tertiary": "#50fa7b",
+      "--accent-bg": "#282a36",
+      "--accent-srf": "#1e1f29",
+      "--accent-txt": "#f8f8f2"
+    }
+  },
+  {
+    "id": "nord",
+    "name": "Nord",
+    "colors": {
+      "--accent-primary": "#88c0d0",
+      "--accent-secondary": "#434c5e",
+      "--accent-tertiary": "#b48ead",
+      "--accent-bg": "#2e3440",
+      "--accent-srf": "#3b4252",
+      "--accent-txt": "#eceff4"
+    }
+  },
+  {
+    "id": "rose-pine",
+    "name": "Rosé Pine",
+    "colors": {
+      "--accent-primary": "#ebbcba",
+      "--accent-secondary": "#2a2837",
+      "--accent-tertiary": "#c4a7e7",
+      "--accent-bg": "#191724",
+      "--accent-srf": "#1f1d2e",
+      "--accent-txt": "#e0def4"
+    }
+  },
+  {
+    "id": "monochrome",
+    "name": "Monochrome",
+    "colors": {
+      "--accent-primary": "#ffffff",
+      "--accent-secondary": "#333333",
+      "--accent-tertiary": "#888888",
+      "--accent-bg": "#000000",
+      "--accent-srf": "#1a1a1a",
+      "--accent-txt": "#ffffff"
+    }
+  },
+  {
+    "id": "catppuccin-latte",
+    "name": "Catppuccin Latte",
+    "colors": {
+      "--accent-primary": "#1e66f5",
+      "--accent-secondary": "#ccd0da",
+      "--accent-tertiary": "#ea76cb",
+      "--accent-bg": "#eff1f5",
+      "--accent-srf": "#e6e9ef",
+      "--accent-txt": "#4c4f69"
+    }
+  },
+  {
+    "id": "catppuccin-frappe",
+    "name": "Catppuccin Frappé",
+    "colors": {
+      "--accent-primary": "#8ca0f3",
+      "--accent-secondary": "#414559",
+      "--accent-tertiary": "#f4b8e4",
+      "--accent-bg": "#303446",
+      "--accent-srf": "#292c3c",
+      "--accent-txt": "#c6d0f5"
+    }
+  },
+  {
+    "id": "catppuccin-macchiato",
+    "name": "Catppuccin Macchiato",
+    "colors": {
+      "--accent-primary": "#8cadff",
+      "--accent-secondary": "#363a4f",
+      "--accent-tertiary": "#f5bde6",
+      "--accent-bg": "#24273a",
+      "--accent-srf": "#1e2030",
+      "--accent-txt": "#cad3f5"
+    }
+  },
+  {
+    "id": "catppuccin-mocha",
+    "name": "Catppuccin Mocha",
+    "colors": {
+      "--accent-primary": "#89b4fa",
+      "--accent-secondary": "#313244",
+      "--accent-tertiary": "#f5c2e7",
+      "--accent-bg": "#1e1e2e",
+      "--accent-srf": "#181825",
+      "--accent-txt": "#cdd6f4"
+    }
+  },
+  {
+    "id": "ayu-mirage",
+    "name": "Ayu Mirage",
+    "colors": {
+      "--accent-primary": "#ffcc66",
+      "--accent-secondary": "#242936",
+      "--accent-tertiary": "#5ccfe6",
+      "--accent-bg": "#171b24",
+      "--accent-srf": "#1f2430",
+      "--accent-txt": "#cccac2"
+    }
+  },
+  {
+    "id": "horizon-dark",
+    "name": "Horizon Dark",
+    "colors": {
+      "--accent-primary": "#fab795",
+      "--accent-secondary": "#2e303e",
+      "--accent-tertiary": "#e95678",
+      "--accent-bg": "#1c1e26",
+      "--accent-srf": "#232530",
+      "--accent-txt": "#e3e6ee"
+    }
+  }
+]

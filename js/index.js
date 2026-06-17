@@ -40,9 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         plugins: [
             WaveSurfer.Hover.create({
-                lineColor: accentText,
+                lineColor: 'var(--accent-txt)',
                 lineWidth: 1,
-                labelColor: accentPrimary,
+                labelColor: 'var(--accent-primary)',
                 labelFontSize: 12,
                 formatTimeCallback: (seconds) => {
                     return formatTime(seconds);
@@ -538,46 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     });
 
-    //todo: fetch from jSON :sob: instead
-    const themes = [
-        {
-            id: 'default',
-            name: 'Digital Green',
-            colors: {
-                '--accent-primary': '#acf7c1',
-                '--accent-secondary': '#324a3a',
-                '--accent-tertiary': '#7da887',
-                '--accent-bg': '#121614',
-                '--accent-srf': '#1a201c',
-                '--accent-txt': '#e2e9e4'
-            }
-        },
-        {
-            id: 'gruvbox',
-            name: 'Gruvbox',
-            colors: {
-                '--accent-primary': '#fabd2f',
-                '--accent-secondary': '#504945',
-                '--accent-tertiary': '#665c54',
-                '--accent-bg': '#282828',
-                '--accent-srf': '#3c3836',
-                '--accent-txt': '#ebdbb2'
-            }
-        },
-        {
-            id: 'dracula',
-            name: 'Dracula',
-            colors: {
-                '--accent-primary': '#ff79c6',
-                '--accent-secondary': '#44475a',
-                '--accent-tertiary': '#6272a4',
-                '--accent-bg': '#282a36',
-                '--accent-srf': '#1e1f29',
-                '--accent-txt': '#f8f8f2'
-            }
-        }
-    ];
-
     const themeSwitchBtn = document.getElementById('themeSwitch');
     const themeOverlay = document.querySelector('.theme-overlay');
     const previewHeader = document.querySelector('.preview-header');
@@ -624,20 +584,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    themes.forEach((t) => {
-        const card = document.createElement('div');
-        card.className = 'theme-card';
-        for (const [prop,value] of Object.entries(t.colors)) card.style.setProperty(prop,value);
-        card.innerHTML = `
-            <div class="theme-circle"></div>
-            <span class="theme-name">${t.name}</span>
-        `;
-        card.addEventListener('click', () => {
-            applyTheme(t);
-            toggleThemeMenu(false);
-        });
-        themeOverlay.appendChild(card);
-    });
+    fetch('themes.json')
+        .then(res => res.json())
+        .then (themes => {
+            themes.forEach((t) => {
+                const card = document.createElement('div');
+                card.className = 'theme-card';
+                for (const [prop,value] of Object.entries(t.colors)) card.style.setProperty(prop,value);
+                card.innerHTML = `
+                    <div class="theme-circle"></div>
+                    <span class="theme-name">${t.name}</span>
+                `;
+                card.addEventListener('click', () => {
+                    applyTheme(t);
+                    toggleThemeMenu(false);
+                });
+                themeOverlay.appendChild(card);
+            });
+        })
+        .catch(err => console.error('Error fetching themes.jSON :sob: :', err));
 
     themeSwitchBtn.addEventListener('click', () => toggleThemeMenu());
 

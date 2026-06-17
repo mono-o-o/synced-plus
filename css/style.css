@@ -728,6 +728,7 @@ header button {
     gap: var(--space-4);
     padding: var(--space-4);
     overflow-y: auto;
+    scrollbar-color: var(--accent-secondary) var(--accent-bg);
 }
 
 .theme-overlay.is-active {display: flex;}
@@ -758,3 +759,5 @@ header button {
     font-size: var(--text-base);
     font-weight: 500;
 }
+
+/*todo: responsiveness LMAO/*
