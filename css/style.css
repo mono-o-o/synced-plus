@@ -261,16 +261,6 @@ header button {
     margin: 0;
 }
 
-.info-field span {
-    background-color: var(--accent-srf);
-    color: var(--accent-txt);
-    border: 1px solid var(--accent-muted);
-    border-left: none;
-    padding: 4px var(--space-2);
-    margin-left: calc(-1 * var(--space-4));
-    border-radius: 0 0.1rem 0.1rem 0;
-}
-
 .info-field input:focus {
     border-color: var(--accent-primary);
 }
@@ -501,17 +491,23 @@ header button {
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    border: 1px dashed var(--accent-muted);
+    border: 1px dashed var(--accent-txt);
     background: none;
-    color: var(--accent-muted);
+    color: var(--accent-txt);
     padding: var(--space-4) 0;
     cursor: pointer;
     transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
 #addLineBtn:hover {
-    border-color: var(--accent-txt);
-    color: var(--accent-txt);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+#addLineBtn:disabled {
+    border-color: var(--accent-muted);
+    color: var(--accent-muted);
+    cursor: not-allowed;
 }
 
 .line-main-row {
@@ -621,6 +617,7 @@ header button {
     gap: var(--space-2);
     border: 1px solid var(--accent-muted);
     padding: var(--space-2) var(--space-3);
+    cursor: pointer;
 }
 
 .word-text {
@@ -680,6 +677,8 @@ header button {
     transition: all var(--transition-fast);
 }
 
+.active-word-card .word-text {color: var(--accent-primary);}
+
 .word-text {
     cursor: pointer;
     transition: color var(--transition-fast);
@@ -715,4 +714,10 @@ header button {
     background-color: var(--accent-srf);
     min-height: 0;
     overflow-y: auto;
+    padding: var(--space-4);
+    font-family: 'Fira Code', monospace;
+    color: var(--accent-txt);
+    white-space: pre-wrap;
+    font-size: var(--text-sm);
+    line-height: 1.8;
 }

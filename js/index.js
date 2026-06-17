@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wavesurfer.on('ready', () => {
         duration.textContent = formatTime(wavesurfer.getDuration());
         currTime.textContent = formatTime(0);
+        addLineBtn.disabled = false;
     });
 
     const parseTime = (timeString) => {
@@ -178,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const linesContainer = document.getElementById('lines');
     const addLineBtn = document.getElementById('addLineBtn');
+    addLineBtn.disabled = true;
     const setTimeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="m12 11.6l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T10 11.975V8q0-.425.288-.712T11 7t.713.288T12 8zM18 6h-2q-.425 0-.712-.287T15 5t.288-.712T16 4h2V2q0-.425.288-.712T19 1t.713.288T20 2v2h2q.425 0 .713.288T23 5t-.288.713T22 6h-2v2q0 .425-.288.713T19 9t-.712-.288T18 8zM7.488 20.3q-1.638-.7-2.863-1.925T2.7 15.512T2 12t.7-3.512t1.925-2.863T7.488 3.7T11 3q.275 0 .513.013t.512.062q.425 0 .713.288t.287.712t-.288.713t-.712.287q-.275 0-.513-.038T11 5Q8.05 5 6.025 7.025T4 12t2.025 4.975T11 19t4.975-2.025T18 12q0-.425.288-.712T19 11t.713.288T20 12q0 1.875-.7 3.513t-1.925 2.862t-2.863 1.925T11 21t-3.512-.7" /></svg>`
 
     const enforceFormat = (el) => {
@@ -186,7 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
             digits = digits.substring(0,6);
             let formatted = '';
             for (let i = 0; i < digits.length; i++) {
-                if (i === 2) formatted += ':';
+                if (i === 2) {
+                    formatted += ':';
+                    if (parseInt(digits[i]) > 5) {
+                        digits = digits.substring(0,i) + '5' + digits.substring(i+1);
+                    }
+                }
                 if (i === 4) formatted += '.';
                 formatted += digits[i];
             }
@@ -367,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const wordCard = document.createElement('div');
                 wordCard.className = 'word-card';
+                wordCard.title = `Jump to word`;
                 wordCard.innerHTML = `
                     <span class="word-text" title="Jump to word">${word}</span>
                     <div class="time-field">
@@ -439,5 +447,58 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         linesContainer.appendChild(lineCard);
+    });
+
+    const previewContainer = document.querySelector('.preview')
+
+    const generateELRC = () => {
+        const title = document.getElementById('trackTitle').value.trim();
+        const artist = document.getElementById('trackArtist').value.trim();
+        const album = document.getElementById('trackAlbum').value.trim();
+
+        let elrc = '';
+        if (title) elrc += `[ti:${title}]\n`;
+        if (artist) elrc += `[ar:${artist}]\n`;
+        if (album) elrc += `[al:${album}]\n`;
+
+        document.querySelectorAll('.line-card').forEach(l => {
+            const start = l.querySelector('.line-start').value;
+            const words = l.querySelectorAll('.word-card');
+
+            if (words.length > 0) {
+                let lineStr = `[${start}]`;
+                words.forEach(w => {
+                    const time = w.querySelector('.word-start').value;
+                    const text = w.querySelector('.word-text').textContent;
+                    lineStr += `<${time}>${text} `;
+                });
+                elrc += lineStr.trimEnd() + '\n';
+            } else {
+                const text = l.querySelector('.lyric-input').value.trim();
+                if (text) elrc += `[${start}]${text}\n`;
+            }
+        });
+        return elrc;
+    }
+
+    const updatePreview = () => previewContainer.textContent = generateELRC();
+
+    document.addEventListener('input', updatePreview);
+    document.addEventListener('click', updatePreview);
+    document.addEventListener('focusout', updatePreview);
+
+    document.getElementById('exportELRC').addEventListener('click', () => {
+        const data = generateELRC();
+        if (!data) return;
+        const blob = new Blob([data], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const title = document.getElementById('trackTitle').value.trim() || 'synced_lyrics';
+        a.download = `${title}.lrc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 });
