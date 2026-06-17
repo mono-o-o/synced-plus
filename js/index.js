@@ -608,8 +608,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const savedThemeId = localStorage.getItem('theme');
     if (savedThemeId) {
-        const found = themes.find(t => t.id === savedThemeId);
-        if (found) applyTheme(found);
+        fetch('themes.json')
+            .then(res => res.json())
+            .then(themes => {
+                const found = themes.find(t => t.id === savedThemeId);
+                if (found) applyTheme(found);
+            }).catch(err => console.error(err));
     }
 
     document.getElementById('lrcFile').addEventListener('change', async (e) => {
@@ -622,57 +626,82 @@ document.addEventListener('DOMContentLoaded', () => {
         const albumInput = document.getElementById('trackAlbum');
         const addLineBtn = document.getElementById('addLineBtn');
         document.querySelectorAll('.line-card').forEach(l => l.remove());
-        lines.forEach(l => {
-            l = l.trim();
-            if (!l) return;
 
-            const metaMatch = l.match(/^\[(ti|ar|al):(.*?)\]$/);
-            if (metaMatch) {
-                if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
-                if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
-                if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
-                titleInput.dispatchEvent(new Event('input', {bubbles:true}));
-                return;
-            }
-
-            const lineMatch = l.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](.*)$/);
-            if (lineMatch) {
-                const lineStart = lineMatch[1];
-                let content = lineMatch[2];
+        if (file.name.endsWith('.txt')) {
+            let lineCount = 0;
+            lines.forEach(l => {
+                const trimmed = l.trim();
+                if (!trimmed) return;
 
                 addLineBtn.click();
                 const newCards = document.querySelectorAll('.line-card');
-                const newCard = newCards[newCards.length - 1];
-
+                const newCard = newCards[newCards.length-1];
                 const lineStartInput = newCard.querySelector('.line-start');
-                lineStartInput.value = lineStart;
+                if (lineCount > 0) {
+                    const prevCard = newCards[newCards.length-2];
+                    lineStartInput.value = prevCard.querySelector('.line-start').value;
+                }
                 lineStartInput.dispatchEvent(new Event('blur'));
 
-                const lyricInput = newCard.querySelector('.lyric-input');
-                const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
-                let wordMatch;
-                const words = [];
+                const lyricInpit = newCard.querySelector('.lyric-input');
+                lyricInpit.value = trimmed;
+                lyricInpit.dispatchEvent(new Event('input'));
+                lineCount++;
+            });
+        } else {
+            lines.forEach(l => {
+                l = l.trim();
+                if (!l) return;
 
-                if (content.includes('<') && content.includes('>')) while ((wordMatch = wordRegex.exec(content)) !== null) words.push({ time: wordMatch[1], text: wordMatch[2].trim() });
-
-                if (words.length > 0) {
-                    lyricInput.value = words.map(w => w.text).join(' ');
-                    lyricInput.dispatchEvent(new Event('change'));
-
-                    const wordCards = newCard.querySelectorAll('.word-card');
-                    words.forEach((wData, i) => {
-                        if (wordCards[i]) {
-                            const wordInput = wordCards[i].querySelector('.word-start');
-                            wordInput.value = wData.time;
-                            wordInput.dispatchEvent(new Event('blur'));
-                        }
-                    });
-                    newCard.querySelector('.word-sync-container').style.display = 'flex';
-                } else {
-                    lyricInput.value = content;
-                    lyricInput.dispatchEvent(new Event('input'));
+                const metaMatch = l.match(/^\[(ti|ar|al):(.*?)\]$/);
+                if (metaMatch) {
+                    if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
+                    titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+                    return;
                 }
-            }
-        })
+
+                const lineMatch = l.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](.*)$/);
+                if (lineMatch) {
+                    const lineStart = lineMatch[1];
+                    let content = lineMatch[2];
+
+                    addLineBtn.click();
+                    const newCards = document.querySelectorAll('.line-card');
+                    const newCard = newCards[newCards.length - 1];
+
+                    const lineStartInput = newCard.querySelector('.line-start');
+                    lineStartInput.value = lineStart;
+                    lineStartInput.dispatchEvent(new Event('blur'));
+
+                    const lyricInput = newCard.querySelector('.lyric-input');
+                    const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
+                    let wordMatch;
+                    const words = [];
+
+                    if (content.includes('<') && content.includes('>')) while ((wordMatch = wordRegex.exec(content)) !== null) words.push({ time: wordMatch[1], text: wordMatch[2].trim() });
+
+                    if (words.length > 0) {
+                        lyricInput.value = words.map(w => w.text).join(' ');
+                        lyricInput.dispatchEvent(new Event('change'));
+
+                        const wordCards = newCard.querySelectorAll('.word-card');
+                        words.forEach((wData, i) => {
+                            if (wordCards[i]) {
+                                const wordInput = wordCards[i].querySelector('.word-start');
+                                wordInput.value = wData.time;
+                                wordInput.dispatchEvent(new Event('blur'));
+                            }
+                        });
+                        newCard.querySelector('.word-sync-container').style.display = 'flex';
+                    } else {
+                        lyricInput.value = content;
+                        lyricInput.dispatchEvent(new Event('input'));
+                    }
+                }
+            })
+        }
+        e.target.value = '';
     })
 });
