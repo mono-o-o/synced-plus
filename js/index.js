@@ -134,34 +134,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     const prevLineSpan = document.getElementById(`prev-l${index}`);
                     if (prevLineSpan && wordCards.length === 0) prevLineSpan.classList.add('active-preview-word');
 
-                    for (let i = 0; i < wordCards.length; i++) {
-                        let activeTimestamp = -1;
-                        for (let i = wordCards.length - 1; i >= 0; i--) {
-                            const wsStr = wordCards[i].querySelector('.word-start').value.trim();
-                            if (wsStr !== '') {
-                                const ws = parseTime(wsStr);
-                                if (currentTime >= ws) {
-                                    activeTimestamp = ws;
-                                    break;
-                                }
-                            }
-                        }
-
-                        for (let i = 0; i < wordCards.length; i++) {
-                            const wsStr = wordCards[i].querySelector('.word-start').value.trim();
-                            const spanEl = displaySpans[i];
-
-                            if (wsStr !== '' && parseTime(wsStr) === activeTimestamp) {
-                                wordCards[i].classList.add('active-word-card');
-                                if (spanEl) spanEl.classList.add('active-word');
-                                const prevWordSpan = document.getElementById(`prev-l${index}-w${i}`);
-                                if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
-                            } else {
-                                wordCards[i].classList.remove('active-word-card');
-                                if (spanEl) spanEl.classList.remove('active-word');
+                    let activeTimestamp = -1;
+                    for (let i = wordCards.length - 1; i >= 0; i--) {
+                        const wsStr = wordCards[i].querySelector('.word-start').value.trim();
+                        if (wsStr !== '') {
+                            const ws = parseTime(wsStr);
+                            if (currentTime >= ws) {
+                                activeTimestamp = ws;
+                                break;
                             }
                         }
                     }
+
+                    for (let i = 0; i < wordCards.length; i++) {
+                        const wsStr = wordCards[i].querySelector('.word-start').value.trim();
+                        const spanEl = displaySpans[i];
+
+                        if (wsStr !== '' && parseTime(wsStr) === activeTimestamp) {
+                            wordCards[i].classList.add('active-word-card');
+                            if (spanEl) spanEl.classList.add('active-word');
+                            const prevWordSpan = document.getElementById(`prev-l${index}-w${i}`);
+                            if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
+                        } else {
+                            wordCards[i].classList.remove('active-word-card');
+                            if (spanEl) spanEl.classList.remove('active-word');
+                        }
+                    }
+
                 } else {
                     line.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word'));
                     line.querySelectorAll('.active-word-card').forEach(el => el.classList.remove('active-word-card'));
@@ -601,6 +600,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 themeOverlay.appendChild(card);
             });
+            const savedThemeId = localStorage.getItem('theme');
+            if (savedThemeId) {
+                const found = themes.find(t => t.id === savedThemeId);
+                if (found) applyTheme(found);
+            }
         })
         .catch(err => console.error('Error fetching themes.jSON :sob: :', err));
 
