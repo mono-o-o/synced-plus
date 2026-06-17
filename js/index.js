@@ -70,6 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
     audioFile.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            const titleInput = document.getElementById('trackTitle');
+            const artistInput = document.getElementById('trackArtist');
+            const albumInput = document.getElementById('trackAlbum');
+
+            titleInput.value = ''; artistInput.value = ''; albumInput.value = '';
+            titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+
             const blobURL = URL.createObjectURL(file);
             wavesurfer.load(blobURL);
             window.jsmediatags.read(file, {
@@ -79,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (tags.artist) document.getElementById('trackArtist').value = tags.artist;
                     if (tags.album) document.getElementById('trackAlbum').value = tags.album;
                     document.getElementById('trackTitle').dispatchEvent(new Event('input', {bubbles:true}));
-                }
+                }, onError: function(err) {console.warn('Problem reading audio metadata: ', err.info);}
             })
         }
     });
