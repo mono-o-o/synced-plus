@@ -91,11 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const importLRC = document.getElementById('importLRC');
+    const lrcFile = document.getElementById('lrcFile');
+    importLRC.classList.add('disabled');
+    importLRC.title = "Please open an audio file first!";
+    lrcFile.disabled = true;
     wavesurfer.on('ready', () => {
         duration.textContent = formatTime(wavesurfer.getDuration());
         currTime.textContent = formatTime(0);
         addLineBtn.disabled = false;
         addLineBtn.removeAttribute('title');
+        importLRC.classList.remove('disabled');
+        importLRC.removeAttribute('title');
+        lrcFile.disabled = false;
     });
 
     const parseTime = (timeString) => {
@@ -529,4 +537,177 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     });
+
+    //todo: fetch from jSON :sob: instead
+    const themes = [
+        {
+            id: 'default',
+            name: 'Digital Green',
+            colors: {
+                '--accent-primary': '#acf7c1',
+                '--accent-secondary': '#324a3a',
+                '--accent-tertiary': '#7da887',
+                '--accent-bg': '#121614',
+                '--accent-srf': '#1a201c',
+                '--accent-txt': '#e2e9e4'
+            }
+        },
+        {
+            id: 'gruvbox',
+            name: 'Gruvbox',
+            colors: {
+                '--accent-primary': '#fabd2f',
+                '--accent-secondary': '#504945',
+                '--accent-tertiary': '#665c54',
+                '--accent-bg': '#282828',
+                '--accent-srf': '#3c3836',
+                '--accent-txt': '#ebdbb2'
+            }
+        },
+        {
+            id: 'dracula',
+            name: 'Dracula',
+            colors: {
+                '--accent-primary': '#ff79c6',
+                '--accent-secondary': '#44475a',
+                '--accent-tertiary': '#6272a4',
+                '--accent-bg': '#282a36',
+                '--accent-srf': '#1e1f29',
+                '--accent-txt': '#f8f8f2'
+            }
+        }
+    ];
+
+    const themeSwitchBtn = document.getElementById('themeSwitch');
+    const themeOverlay = document.querySelector('.theme-overlay');
+    const previewHeader = document.querySelector('.preview-header');
+    const previewHeaderText = previewHeader.querySelector('p');
+    const previewHeaderIcon = previewHeader.querySelector('svg');
+
+    const originalHeaderText = previewHeaderText.textContent;
+    const originalHeaderIcon = previewHeaderIcon.innerHTML;
+
+    const palettePath = "M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20";
+    const paletteIconHTML = `<path style="fill: var(--accent-primary)" d="${palettePath}" />`;
+
+    let isThemeMenuOpen = false;
+
+    const applyTheme = (theme) => {
+        const root = document.documentElement;
+        for (const [prop,value] of Object.entries(theme.colors)) root.style.setProperty(prop,value);
+
+        const newPrimary = getComputedStyle(root).getPropertyValue('--accent-primary');
+        const newSecondary = getComputedStyle(root).getPropertyValue('--accent-secondary');
+        const newSrf = getComputedStyle(root).getPropertyValue('--accent-srf');
+        const newText = getComputedStyle(root).getPropertyValue('--accent-txt');
+
+        wavesurfer.setOptions({
+            waveColor: newSecondary,
+            progressColor: newPrimary,
+            backgroundColor: newSrf,
+            cursorColor: newText
+        });
+
+        localStorage.setItem('theme', theme.id);
+    }
+
+    const toggleThemeMenu = (s) => {
+        isThemeMenuOpen = s !== undefined ? s : !isThemeMenuOpen;
+        if (isThemeMenuOpen) {
+            themeOverlay.classList.add('is-active');
+            previewHeaderText.textContent = 'Theme Selection';
+            previewHeaderIcon.innerHTML = paletteIconHTML;
+        } else {
+            themeOverlay.classList.remove('is-active');
+            previewHeaderText.textContent = originalHeaderText;
+            previewHeaderIcon.innerHTML = originalHeaderIcon;
+        }
+    }
+
+    themes.forEach((t) => {
+        const card = document.createElement('div');
+        card.className = 'theme-card';
+        for (const [prop,value] of Object.entries(t.colors)) card.style.setProperty(prop,value);
+        card.innerHTML = `
+            <div class="theme-circle"></div>
+            <span class="theme-name">${t.name}</span>
+        `;
+        card.addEventListener('click', () => {
+            applyTheme(t);
+            toggleThemeMenu(false);
+        });
+        themeOverlay.appendChild(card);
+    });
+
+    themeSwitchBtn.addEventListener('click', () => toggleThemeMenu());
+
+    const savedThemeId = localStorage.getItem('theme');
+    if (savedThemeId) {
+        const found = themes.find(t => t.id === savedThemeId);
+        if (found) applyTheme(found);
+    }
+
+    document.getElementById('lrcFile').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        const lines = text.split('\n');
+        const titleInput = document.getElementById('trackTitle');
+        const artistInput = document.getElementById('trackArtist');
+        const albumInput = document.getElementById('trackAlbum');
+        const addLineBtn = document.getElementById('addLineBtn');
+        document.querySelectorAll('.line-card').forEach(l => l.remove());
+        lines.forEach(l => {
+            l = l.trim();
+            if (!l) return;
+
+            const metaMatch = l.match(/^\[(ti|ar|al):(.*?)\]$/);
+            if (metaMatch) {
+                if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
+                if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
+                if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
+                titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+                return;
+            }
+
+            const lineMatch = l.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](.*)$/);
+            if (lineMatch) {
+                const lineStart = lineMatch[1];
+                let content = lineMatch[2];
+
+                addLineBtn.click();
+                const newCards = document.querySelectorAll('.line-card');
+                const newCard = newCards[newCards.length - 1];
+
+                const lineStartInput = newCard.querySelector('.line-start');
+                lineStartInput.value = lineStart;
+                lineStartInput.dispatchEvent(new Event('blur'));
+
+                const lyricInput = newCard.querySelector('.lyric-input');
+                const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
+                let wordMatch;
+                const words = [];
+
+                if (content.includes('<') && content.includes('>')) while ((wordMatch = wordRegex.exec(content)) !== null) words.push({ time: wordMatch[1], text: wordMatch[2].trim() });
+
+                if (words.length > 0) {
+                    lyricInput.value = words.map(w => w.text).join(' ');
+                    lyricInput.dispatchEvent(new Event('change'));
+
+                    const wordCards = newCard.querySelectorAll('.word-card');
+                    words.forEach((wData, i) => {
+                        if (wordCards[i]) {
+                            const wordInput = wordCards[i].querySelector('.word-start');
+                            wordInput.value = wData.time;
+                            wordInput.dispatchEvent(new Event('blur'));
+                        }
+                    });
+                    newCard.querySelector('.word-sync-container').style.display = 'flex';
+                } else {
+                    lyricInput.value = content;
+                    lyricInput.dispatchEvent(new Event('input'));
+                }
+            }
+        })
+    })
 });

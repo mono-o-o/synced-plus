@@ -157,7 +157,7 @@ header button {
     font-size: var(--text-sm);
 }
 
-#importAudio {
+#importAudio, #importLRC {
     background: none;
     border: none;
     color: var(--accent-txt);
@@ -176,8 +176,14 @@ header button {
     user-select: none;
 }
 
-#importAudio:hover, #themeSwitch:hover {
+#importAudio:hover, #themeSwitch:hover, #importLRC:hover {
     box-shadow: 0 0 0 1px var(--accent-txt);
+}
+
+#importLRC.disabled {
+    box-shadow: 0 0 0 1px var(--accent-muted) !important;
+    color: var(--accent-muted);
+    cursor: not-allowed;
 }
 
 #exportELRC {
@@ -710,4 +716,45 @@ header button {
     color: var(--accent-primary);
     text-shadow: 0 0 5px var(--accent-secondary);
     transition: color var(--transition-fast);
+}
+
+.theme-overlay {
+    grid-row: 3;
+    grid-column: 2;
+    background-color: var(--accent-srf);
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    overflow-y: auto;
+}
+
+.theme-overlay.is-active {display: flex;}
+
+.theme-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    background-color: var(--accent-srf);
+    border: 1px solid var(--accent-muted);
+    padding: var(--space-4);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.theme-card:hover {border-color: var(--accent-primary);}
+
+.theme-circle {
+    width: 1.5rem; height: 1.5rem;
+    border-radius: 50%;
+    background-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-muted);
+}
+
+.theme-name {
+    color: var(--accent-txt);
+    font-size: var(--text-base);
+    font-weight: 500;
 }
