@@ -138,6 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const prevLineSpan = document.getElementById(`prev-l${index}`);
                     if (prevLineSpan && wordCards.length === 0) prevLineSpan.classList.add('active-preview-word');
 
+                    let hasWordTimestamps = false;
+                    for (let i = 1; i < wordCards.length; i++) {
+                        if (wordCards[i].querySelector('.word-start').value.trim() !== '') {
+                            hasWordTimestamps = true;
+                            break;
+                        }
+                    }
+
                     let activeTimestamp = -1;
                     for (let i = wordCards.length - 1; i >= 0; i--) {
                         const wsStr = wordCards[i].querySelector('.word-start').value.trim();
@@ -154,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const wsStr = wordCards[i].querySelector('.word-start').value.trim();
                         const spanEl = displaySpans[i];
 
-                        if (wsStr !== '' && parseTime(wsStr) === activeTimestamp) {
+                        if (!hasWordTimestamps || (wsStr !=='' && parseTime(wsStr) === activeTimestamp)) {
                             wordCards[i].classList.add('active-word-card');
                             if (spanEl) spanEl.classList.add('active-word');
                             const prevWordSpan = document.getElementById(`prev-l${index}-w${i}`);
@@ -471,8 +479,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 wordCard.addEventListener('click', (e) => {
                     if (e.target.closest('input') || e.target.closest('button')) return;
-                    const wordStartSec = parseTime(wordTimeInput.value);
-                    if (wordStartSec >= 0 && wavesurfer.getDuration() > 0) {
+                    const timeInput = wordTimeInput.value.trim() === '' ? startInput.value : wordTimeInput.value;
+                    const wordStartSec = parseTime(timeInput);
+                    if (wavesurfer.getDuration() > 0) {
                         wavesurfer.setTime(wordStartSec);
                         wavesurfer.play();
                     }
