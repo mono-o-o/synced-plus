@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="lyric-wrapper">
-                    <input type="text" class="lyric-input" placeholder="Enter lyric line here...">
+                    <input type="text" class="lyric-input" placeholder="Enter lyric line here (type /nl for blank line)">
                     <div class="lyric-display"></div>
                 </div>
                 <div class="line-actions">
@@ -405,8 +405,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         lyricInput.addEventListener('change', () => {
-            const text = lyricInput.value.trim();
+            let text = lyricInput.value.trim();
+            if (text === '/nl') text = '';
             const words = text ? text.split(/\s+/) : [];
+            if (words.length === 0) wordContainer.style.display = 'none';
 
             wordContainer.innerHTML = '';
             displayContainer.innerHTML = '';
@@ -519,8 +521,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 elrc += lineStr.trimEnd() + '\n';
             } else {
-                const text = l.querySelector('.lyric-input').value.trim();
-                if (text) {
+                let text = l.querySelector('.lyric-input').value.trim();
+                if (text === '/nl') text = '';
+                if (forPreview) {
                     if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
                     else elrc += `[${start}]${text}\n`;
                 }
