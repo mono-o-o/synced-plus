@@ -400,18 +400,30 @@ document.addEventListener('DOMContentLoaded', () => {
             lyricInput.focus();
         });
 
+        lyricInput.addEventListener('focus', () => {
+            lineCard.classList.add('is-editing');
+        })
+
         lyricInput.addEventListener('blur', () => {
             lineCard.classList.remove('is-editing');
         });
 
         lyricInput.addEventListener('change', () => {
-            let text = lyricInput.value.trim();
-            if (text === '/nl') text = '';
+            const text = lyricInput.value.trim();
             const words = text ? text.split(/\s+/) : [];
-            if (words.length === 0) wordContainer.style.display = 'none';
+
+            if (text === '' || text === '/nl') wordContainer.style.display = 'none';
 
             wordContainer.innerHTML = '';
             displayContainer.innerHTML = '';
+
+            if (text === '/nl') {
+                const displaySpan = document.createElement('span');
+                displaySpan.textContent = '(empty line)';
+                displaySpan.style.opacity = '0.5';
+                displayContainer.appendChild(displaySpan);
+                return;
+            }
 
             words.forEach((word, index) => {
                 const defaultWordTime = index === 0 ? startInput.value : '';
