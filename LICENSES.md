@@ -65,7 +65,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ## 4. Colour Palettes
 
-While not subject to copyright, synced+ would still like to extend attribution to the designers of the following colour schemes:
+While the colour schemes used are not subject to copyright, synced+ would still like to extend attribution to the designers of the following:
 * Gruvbox Material: Pavel Pertsev (@morhetz) and extended by Sainnhe Park (@sainnhe) and maintainers.
 * Dracula: Zeno Rocha (@zenorocha) and maintainers.
 * Nord: Arctic Ice Studio and Sven Greb (@svengreb).
