@@ -651,9 +651,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 lineStartInput.dispatchEvent(new Event('blur'));
 
-                const lyricInpit = newCard.querySelector('.lyric-input');
-                lyricInpit.value = trimmed;
-                lyricInpit.dispatchEvent(new Event('input'));
+                const lyricInput = newCard.querySelector('.lyric-input');
+                lyricInput.value = trimmed;
+                lyricInput.dispatchEvent(new Event('change'));
+                lyricInput.dispatchEvent(new Event('input', {bubbles:true}));
                 lineCount++;
             });
         } else {
@@ -705,7 +706,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         newCard.querySelector('.word-sync-container').style.display = 'flex';
                     } else {
                         lyricInput.value = content;
-                        lyricInput.dispatchEvent(new Event('input'));
+                        lyricInput.dispatchEvent(new Event('change'));
+                        lyricInput.dispatchEvent(new Event('input', {bubbles:true}));
                     }
                 }
             })
