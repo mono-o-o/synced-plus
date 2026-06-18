@@ -39,15 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fillParent: true,
 
         plugins: [
-            WaveSurfer.Hover.create({
-                lineColor: 'var(--accent-txt)',
-                lineWidth: 1,
-                labelColor: 'var(--accent-primary)',
-                labelFontSize: 12,
-                formatTimeCallback: (seconds) => {
-                    return formatTime(seconds);
-                }
-            }),
             WaveSurfer.Zoom.create({
                 exponentialZooming: true,
                 maxZoom: 1000
@@ -96,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     importLRC.classList.add('disabled');
     importLRC.title = "Please open an audio file first!";
     lrcFile.disabled = true;
+    let hoverPlugin;
     wavesurfer.on('ready', () => {
         duration.textContent = formatTime(wavesurfer.getDuration());
         currTime.textContent = formatTime(0);
@@ -104,6 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
         importLRC.classList.remove('disabled');
         importLRC.removeAttribute('title');
         lrcFile.disabled = false;
+
+        if (!hoverPlugin) {
+            hoverPlugin = wavesurfer.registerPlugin(
+                WaveSurfer.Hover.create({
+                    lineColor: 'var(--accent-txt)',
+                    lineWidth: 1,
+                    labelColor: 'var(--accent-primary)',
+                    labelFontSize: 12,
+                    formatTimeCallback: (seconds) => formatTime(seconds)
+                })
+            )
+        }
     });
 
     const parseTime = (timeString) => {
