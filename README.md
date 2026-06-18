@@ -17,11 +17,25 @@ A minimal, browser-based Enhanced LRC creator. Simply import your audio and opti
 
 ## Features
 
-* <strong>Specifically for ELRC</strong>: Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
-* <strong>Interactive Waveform</strong>: Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping. Includes playback buttons, too, obviously.
-* <strong>Smart File Import</strong>: Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
-* <strong>Live Preview</strong>: Watch your ELRC file compile in realtime in a preview sidebar.
-* <strong>Themes !!!!</strong>: Choose from a selection of colour palettes that I totally do not use in my IDEs.
+### <strong>Specifically for ELRC</strong>
+
+Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
+
+### <strong>Interactive Waveform</strong>
+
+Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping. Includes playback buttons, too, obviously.
+
+### <strong>Smart File Import</strong>
+
+Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
+
+### <strong>Live Preview</strong>
+
+Watch your ELRC file compile in realtime in a preview sidebar.
+
+### <strong>Themes !!!!</strong>
+
+Choose from a selection of colour palettes that I totally do not use in my IDEs.
 
 ## How to Use
 
