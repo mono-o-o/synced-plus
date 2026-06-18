@@ -710,6 +710,7 @@ header button {
     white-space: pre-wrap;
     font-size: var(--text-xs);
     line-height: 1.8;
+    scrollbar-color: var(--accent-secondary) var(--accent-bg);
 }
 
 .active-preview-word {
