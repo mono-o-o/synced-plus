@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="lyric-wrapper">
-                    <input type="text" class="lyric-input" placeholder="Enter lyric line here (type /nl for blank line)">
+                    <input type="text" class="lyric-input" placeholder="Enter lyric line here (leave empty for blank line)">
                     <div class="lyric-display"></div>
                 </div>
                 <div class="line-actions">
@@ -412,18 +412,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = lyricInput.value.trim();
             const words = text ? text.split(/\s+/) : [];
 
-            if (text === '' || text === '/nl') wordContainer.style.display = 'none';
-
             wordContainer.innerHTML = '';
             displayContainer.innerHTML = '';
 
-            if (text === '/nl') {
-                const displaySpan = document.createElement('span');
-                displaySpan.textContent = '(empty line)';
-                displaySpan.style.opacity = '0.5';
-                displayContainer.appendChild(displaySpan);
-                return;
-            }
+            if (words.length === 0) wordContainer.style.display = 'none';
 
             words.forEach((word, index) => {
                 const defaultWordTime = index === 0 ? startInput.value : '';
@@ -533,12 +525,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 elrc += lineStr.trimEnd() + '\n';
             } else {
-                let text = l.querySelector('.lyric-input').value.trim();
-                if (text === '/nl') text = '';
-                if (forPreview) {
-                    if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
-                    else elrc += `[${start}]${text}\n`;
-                }
+                const text = l.querySelector('.lyric-input').value.trim();
+                if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
+                else elrc += `[${start}]${text}\n`;
             }
         });
         return elrc;
