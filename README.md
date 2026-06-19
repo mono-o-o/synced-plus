@@ -44,7 +44,7 @@ Choose from a selection of colour palettes that I totally do not use in my IDEs.
 
    In the case of importing a TXT file, synced+ will read per line and add a lyric line card in the main workspace for each.
 
-   Alternatively, you can opt not to import a text file and manually add lyric lines yourself. Typing `/nl` will create an empty timestamped line, perfect for setting line endpoints.
+   Alternatively, you can opt not to import a text file and manually add lyric lines yourself. Leaving a line blank will create an empty timestamped line, perfect for setting line endpoints. (i swear i'll *re*implement endpoint logic soon)
 
 4. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.
 5. <strong>Export</strong>: Click on the <strong>Export</strong> button to download your fully formatted .lrc file.
