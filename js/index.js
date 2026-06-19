@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const lines = document.querySelectorAll('.line-card');
             lines.forEach((line,index) => {
                 const start = parseTime(line.querySelector('.line-start').value);
-                const end = (index + 1 < lines.length) ? parseTime(lines[index+1].querySelector('.line-start').value) : wavesurfer.getDuration();
+                const end = parseTime(line.querySelector('.line-end').value) || wavesurfer.getDuration();
                 if (currentTime >= start && currentTime < end) {
                     line.classList.add('current-line');
 
@@ -295,9 +295,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="text" class="time-input line-start" placeholder="00:00.00" value="${defaultTime}">
                         <button type="button" class="time-btn get-start-btn">${setTimeIcon}</button>
                     </div>
+                    <div class="time-field" title="Line end time">
+                        <input type="text" class="time-input line-end" placeholder="00:00.00" value="${defaultTime}">
+                        <button type="button" class="time-btn get-end-btn">${setTimeIcon}</button>
+                    </div>
                 </div>
                 <div class="lyric-wrapper">
-                    <input type="text" class="lyric-input" placeholder="Enter lyric line here (leave empty for blank line)">
+                    <input type="text" class="lyric-input" placeholder="Enter lyric line here...">
                     <div class="lyric-display"></div>
                 </div>
                 <div class="line-actions">
@@ -318,6 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const startInput = lineCard.querySelector('.line-start');
         enforceFormat(startInput);
         const getStartBtn = lineCard.querySelector('.get-start-btn');
+        const endInput = lineCard.querySelector('.line-end');
+        enforceFormat(endInput);
+        const getEndBtn = lineCard.querySelector('.get-end-btn');
         const lyricInput = lineCard.querySelector('.lyric-input');
         const playLineBtn = lineCard.querySelector('.play-line-btn');
         const deleteBtn = lineCard.querySelector('.delete-btn');
@@ -333,46 +340,55 @@ document.addEventListener('DOMContentLoaded', () => {
             el.value = formatTime(wavesurfer.getCurrentTime());
         }
 
-        const validateStartTime = () => {
+        const validateTimes = () => {
             const prevCard = lineCard.previousElementSibling;
-            let currStartSec = parseTime(startInput.value);
-            const duration = wavesurfer.getDuration();
             const nextCard = lineCard.nextElementSibling;
+            let startSec = parseTime(startInput.value);
+            let endSec = parseTime(endInput.value);
+            const duration = wavesurfer.getDuration();
 
-            if (duration > 0 && currStartSec > duration) {
-                currStartSec = duration;
+            if (duration > 0 && startSec > duration) {
+                startSec = duration;
                 startInput.value = formatTime(duration);
             }
 
             if (prevCard && prevCard.classList.contains('line-card')) {
-                const prevWords = prevCard.querySelectorAll('.word-start');
-                const prevLimit = prevWords.length > 0 ? parseTime(prevWords[prevWords.length-1].value) : parseTime(prevCard.querySelector('.line-start').value);
-                if (currStartSec < prevLimit) {
-                    startInput.value = formatTime(prevLimit);
-                    currStartSec = prevLimit;
+                const prevEnd = parseTime(prevCard.querySelector('.line-end').value);
+                if (startSec < prevEnd) {
+                    startInput.value = formatTime(prevEnd);
+                    startSec = prevEnd;
                 }
+            }
+
+            if (endSec < startSec) {
+                endInput.value = formatTime(startSec);
+                endSec = startSec;
+            }
+
+            if (duration > 0 && endSec > duration) {
+                endSec = duration;
+                endInput.value = formatTime(duration);
             }
 
             const firstWord = lineCard.querySelector('.word-start');
             if (firstWord) {
-                firstWord.value = formatTime(currStartSec);
+                firstWord.value = formatTime(startSec);
                 firstWord.dispatchEvent(new Event('blur'));
             }
 
             if (nextCard && nextCard.classList.contains('line-card')) {
                 const nextStartInput = nextCard.querySelector('.line-start');
-                if (currStartSec > parseTime(nextStartInput.value)) {
-                    nextStartInput.value = formatTime(currStartSec);
+                if (endSec > parseTime(nextStartInput.value)) {
+                    nextStartInput.value = formatTime(endSec);
                     nextStartInput.dispatchEvent(new Event('blur'));
                 }
             }
         }
 
-        startInput.addEventListener('blur', validateStartTime);
-        getStartBtn.addEventListener('click', () => {
-            setTime(startInput);
-            validateStartTime();
-        });
+        startInput.addEventListener('blur', validateTimes);
+        endInput.addEventListener('blur', validateTimes);
+        getStartBtn.addEventListener('click', () => {setTime(startInput); validateTimes();})
+        getEndBtn.addEventListener('click', () => {setTime(endInput); validateTimes();})
 
         playLineBtn.addEventListener('click', (e) => {
             const startSec = parseTime(startInput.value);
@@ -468,12 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             nextWordInput.value = formatTime(wordSec);
                             nextWordInput.dispatchEvent(new Event('blur'));
                         }
-                    } else if (nextCard && nextCard.classList.contains('line-card')) {
-                        const nextStartInput = nextCard.querySelector('.line-start');
-                        if (wordSec > parseTime(nextStartInput.value)) {
-                            nextStartInput.value = formatTime(wordSec);
-                            nextStartInput.dispatchEvent(new Event('blur'));
-                        }
+                    } else if (wordSec > parseTime(endInput.value)) {
+                        wordSec = parseTime(endInput.value);
+                        wordTimeInput.value = formatTime(wordSec);
                     }
                 }
 
@@ -513,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.line-card').forEach((l, lineI) => {
             const start = l.querySelector('.line-start').value;
+            const end = l.querySelector('.line-end').value;
             const words = l.querySelectorAll('.word-card');
 
             if (words.length > 0) {
@@ -528,6 +542,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const text = l.querySelector('.lyric-input').value.trim();
                 if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
                 else elrc += `[${start}]${text}\n`;
+            }
+
+            if (end && end !== "00:00.00" && end !== start) {
+                if (forPreview) elrc += `<span>[${end}]</span>\n`;
+                else elrc += `[${end}]\n`;
             }
         });
         return elrc;
