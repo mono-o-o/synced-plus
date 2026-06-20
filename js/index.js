@@ -594,6 +594,43 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', updatePreview);
     document.addEventListener('focusout', updatePreview);
 
+    const saveFile = async (lyricData, filename) => {
+        if (window.__TAURI_INTERNALS__) {
+            try {
+                const filePath = await window.__TAURI_INTERNALS__.invoke('plugin:dialog|save', {
+                    options: {
+                        defaultPath: `${filename}.lrc`,
+                        filters: [{ name: 'lyrics', extensions: ['lrc', 'txt'] }]
+                    }
+                });
+
+                if (filePath) {
+                    await window.__TAURI_INTERNALS__.invoke('plugin:fs|write_text_file', {
+                        path: filePath,
+                        data: lyricData
+                    });
+                    alert("File saved successfully!");
+                }
+            } catch (err) {
+                console.error("Downloading failed: ", err);
+            }
+        } else {
+            try {
+                const blob = new Blob([lyricData], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${filename}.lrc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error("Downloading failed: ", err);
+            }
+        }
+    }
+
     document.getElementById('exportELRC').addEventListener('click', () => {
         const data = generateELRC();
         if (!data) return;
@@ -607,15 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (titleInput) title = titleInput;
         }
 
-        const blob = new Blob([data], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${title}.lrc`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        saveFile(data, title);
     });
 
     const themeSwitchBtn = document.getElementById('themeSwitch');
