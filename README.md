@@ -6,8 +6,8 @@ A minimal, browser-based Enhanced LRC creator. Simply import your audio and opti
 
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/5f0e3b18-31cf-44bf-9696-d9d81135584a" /></td>
-    <td><img src="https://github.com/user-attachments/assets/61cbf6bf-e63b-4bf1-aa4c-65604e669f95" /></td>
+    <td><img src="https://github.com/user-attachments/assets/d8b1911c-3a4a-419e-be73-2b8a4bb706f9" /></td>
+    <td><img src="https://github.com/user-attachments/assets/e01c62c4-85ae-4bdb-9417-c62e14f5f4ce" /></td>
   </tr>
   <tr align="center">
     <td>Workspace</td>
@@ -28,6 +28,10 @@ Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the 
 ### <strong>Smart File Import</strong>
 
 Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
+
+### <strong>Smart Time Field Setting</strong>
+
+Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
 
 ### <strong>Live Preview</strong>
 

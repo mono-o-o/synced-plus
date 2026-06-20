@@ -46,12 +46,306 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     });
 
+    let lineArray = [];
+    const createNewLine = (defaultTime = "00:00.00") => {
+        return {
+            id: crypto.randomUUID(),
+            start: defaultTime,
+            end: defaultTime,
+            text: '',
+            isEditing: false,
+            isWordSyncExpanded: false,
+            words: []
+        }
+    }
+
+    const renderWorkspace = () => {
+        const linesContainer = document.getElementById('lines');
+        const existingCards = Array.from(linesContainer.querySelectorAll('.line-card'));
+        existingCards.forEach(c => {if (!lineArray.find(l => l.id === c.dataset.id)) c.remove();})
+
+        lineArray.forEach((line) => {
+            let lineCard = linesContainer.querySelector(`.line-card[data-id="${line.id}"]`);
+            if (!lineCard) {
+                lineCard = document.createElement('div');
+                lineCard.className = 'line-card';
+                lineCard.dataset.id = line.id;
+                lineCard.innerHTML = `
+                    <div class="line-main-row">
+                        <div class="time-wrapper">
+                            <div class="time-field" title="Line start time">
+                                <input type="text" class="time-input line-start" placeholder="00:00.00">
+                                <button type="button" class="time-btn get-start-btn">${setTimeIcon}</button>
+                            </div>
+                            <div class="time-field" title="Line end time">
+                                <input type="text" class="time-input line-end" placeholder="00:00.00">
+                                <button type="button" class="time-btn get-end-btn">${setTimeIcon}</button>
+                            </div>
+                        </div>
+                        <div class="lyric-wrapper">
+                            <input type="text" class="lyric-input" placeholder="Enter lyric line here...">
+                            <div class="lyric-display"></div>
+                        </div>
+                        <div class="line-actions">
+                            <button type="button" class="action-btn play-line-btn" title="Play line">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="m10.65 15.75l4.875-3.125q.35-.225.35-.625t-.35-.625L10.65 8.25q-.375-.25-.763-.038t-.387.663v6.25q0 .45.388.663t.762-.038M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" title="Delete line">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6q-.425 0-.712-.288T4 5t.288-.712T5 4h4q0-.425.288-.712T10 3h4q.425 0 .713.288T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM7 6v13zm5 7.9l1.9 1.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7l-1.9-1.9l1.9-1.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 11.1l-1.9-1.9q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l1.9 1.9l-1.9 1.9q-.275.275-.275.7t.275.7t.7.275t.7-.275z"/></svg>
+                            </button>
+                            <button type="button" class="action-btn expand-btn" title="Word-by-word syncing">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="m6.8 13l2.9 2.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-4.6-4.6q-.15-.15-.213-.325T3.426 12t.063-.375t.212-.325l4.6-4.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L6.8 11H19V8q0-.425.288-.712T20 7t.713.288T21 8v3q0 .825-.587 1.413T19 13z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="word-sync-container" style="display: none;"></div>
+                `;
+                linesContainer.appendChild(lineCard);
+            }
+
+            const startInput = lineCard.querySelector('.line-start');
+            if (startInput.value !== line.start) startInput.value = line.start;
+
+            const endInput = lineCard.querySelector('.line-end');
+            if (endInput.value !== line.end) endInput.value = line.end;
+
+            const lyricInput = lineCard.querySelector('.lyric-input');
+            if (lyricInput.value !== line.text) lyricInput.value = line.text;
+
+            if (line.isEditing) lineCard.classList.add('is-editing');
+            else lineCard.classList.remove('is-editing');
+
+            const displayContainer = lineCard.querySelector('.lyric-display');
+            displayContainer.innerHTML = '';
+            line.words.forEach(w => {
+                const span = document.createElement('span');
+                span.textContent = w.text;
+                displayContainer.appendChild(span);
+            });
+
+            const wordContainer = lineCard.querySelector('.word-sync-container');
+            wordContainer.style.display = line.isWordSyncExpanded ? 'flex' : 'none';
+            if (line.words.length === 0) wordContainer.innerHTML = '';
+            else {
+                const existingWords = Array.from(wordContainer.querySelectorAll('.word-card'));
+                existingWords.forEach(wn => {if (!line.words.find(word => word.id === wn.dataset.id)) wn.remove();})
+                line.words.forEach((wordData) => {
+                    let wordCard = wordContainer.querySelector(`.word-card[data-id="${wordData.id}"]`);
+                    if (!wordCard) {
+                        wordCard = document.createElement('div');
+                        wordCard.className = 'word-card';
+                        wordCard.dataset.id = wordData.id;
+                        wordCard.innerHTML = `
+                            <span class="word-text" title="Jump to word"></span>
+                            <div class="time-field">
+                                <input type="text" class="time-input word-start" placeholder="00:00.00">
+                                <button type="button" class="time-btn get-word-btn">${setTimeIcon}</button>
+                            </div>
+                        `;
+                        wordContainer.appendChild(wordCard);
+                    }
+                    const wordInput = wordCard.querySelector('.word-start');
+                    if (wordInput.value !== wordData.time) wordInput.value = wordData.time;
+                    const wordText = wordCard.querySelector('.word-text');
+                    if (wordText.textContent !== wordData.text) wordText.textContent = wordData.text;
+                })
+            }
+        });
+    }
+
+    const linesContainer = document.getElementById('lines');
+    linesContainer.addEventListener('input', (e) => {
+        const card = e.target.closest('.line-card');
+        if (!card) return;
+
+        const lineData = lineArray.find(l => l.id === card.dataset.id);
+
+        if (e.target.classList.contains('lyric-input')) {
+            if (/[<>]/.test(e.target.value)) e.target.value = e.target.value.replace(/[<>]/g, '');
+            lineData.text = e.target.value;
+            const text = lineData.text.trim();
+            const wordStrings = text ? text.split(/\s+/) : [];
+
+            lineData.words = wordStrings.map((w, i) => {
+                const existing = lineData.words[i];
+                return {
+                    id: existing ? existing.id : crypto.randomUUID(),
+                    time: existing ? existing.time : (i === 0 ? lineData.start : ''),
+                    text: w
+                }
+            })
+            renderWorkspace();
+        }
+
+        if (e.target.classList.contains('time-input')) {
+            let digits = e.target.value.replace(/\D/g, '');
+            digits = digits.substring(0, 6);
+            let formatted = '';
+            for (let i = 0; i < digits.length; i++) {
+                if (i === 2) {
+                    formatted += ':';
+                    if (parseInt(digits[i]) > 5) digits = digits.substring(0, i) + '5' + digits.substring(i + 1);
+                }
+                if (i === 4) formatted += '.';
+                formatted += digits[i];
+            }
+            e.target.value = formatted;
+
+            if (e.target.classList.contains('line-start')) lineData.start = formatted;
+            if (e.target.classList.contains('line-end')) lineData.end = formatted;
+            if (e.target.classList.contains('word-start')) {
+                const wCard = e.target.closest('.word-card');
+                lineData.words.find(w => w.id === wCard.dataset.id).time = formatted;
+            }
+        }
+    });
+
+    linesContainer.addEventListener('focusin', (e) => {
+        if (e.target.classList.contains('lyric-input')) {
+            const card = e.target.closest('.line-card');
+            lineArray.find(l => l.id === card.dataset.id).isEditing = true;
+            renderWorkspace();
+        }
+    });
+
+    const validateTimes = (startIndex) => {
+        const duration = wavesurfer.getDuration();
+        for (let i = startIndex; i < lineArray.length; i++) {
+            const currentLine = lineArray[i];
+            const prevLine = lineArray[i-1];
+            let startSec = parseTime(currentLine.start);
+            let endSec = parseTime(currentLine.end);
+
+            if (duration > 0 && startSec > duration) startSec = duration;
+            if (prevLine) {
+                const prevEnd = parseTime(prevLine.end);
+                if (startSec < prevEnd) startSec = prevEnd;
+            }
+            if (endSec < startSec) endSec = startSec;
+            if (duration > 0 && endSec > duration) endSec = duration;
+
+            currentLine.start = formatTime(startSec);
+            currentLine.end = formatTime(endSec);
+
+            if (currentLine.words.length > 0) {
+                const firstWordSec = parseTime(currentLine.words[0].time);
+                if (currentLine.words[0].time && firstWordSec < startSec) currentLine.words[0].time = currentLine.start;
+
+                currentLine.words.forEach((w, i) => {
+                    if (w.time.trim() === '') return;
+                    let wordSec = parseTime(w.time);
+                    if (duration > 0 && wordSec > duration) wordSec = duration;
+
+                    const prevWord = currentLine.words[i-1];
+                    if (prevWord && prevWord.time.trim() !== '') {
+                        const prevWordSec = parseTime(prevWord.time);
+                        if (wordSec < prevWordSec) wordSec = prevWordSec;
+                    } else if (wordSec < startSec) wordSec = startSec;
+
+                    const nextWord = currentLine.words[i+1];
+                    if (nextWord && nextWord.time.trim() !== '') {
+                        if (wordSec > parseTime(nextWord.time)) {
+                            nextWord.time = formatTime(wordSec);
+                        }
+                    } else if (wordSec > endSec) wordSec = endSec;
+                    w.time = formatTime(wordSec);
+                })
+            }
+        }
+    }
+
+    linesContainer.addEventListener('focusout', (e) => {
+        if (e.target.classList.contains('lyric-input')) {
+            const card = e.target.closest('.line-card');
+            lineArray.find(l => l.id === card.dataset.id).isEditing = false;
+            renderWorkspace();
+        }
+
+        if (e.target.classList.contains('time-input')) {
+            const card = e.target.closest('.line-card');
+            const lineIndex = lineArray.findIndex(l => l.id === card.dataset.id);
+            if (lineIndex === -1) {
+                validateTimes(lineIndex);
+                renderWorkspace();
+            }
+        }
+    })
+
+    linesContainer.addEventListener('mousedown', (e) => {
+        const card = e.target.closest('.line-card');
+        if (!card) return;
+        const lineData = lineArray.find(l => l.id === card.dataset.id);
+
+        if (e.target.closest('.lyric-display')) {
+            e.preventDefault();
+            lineData.isEditing = true;
+            renderWorkspace();
+            card.querySelector('.lyric-input').focus();
+        }
+
+        if (e.target.closest('.delete-btn')) {
+            lineArray = lineArray.filter(l => l.id !== card.dataset.id);
+            renderWorkspace();
+        }
+
+        if (e.target.closest('.expand-btn')) {
+            lineData.isWordSyncExpanded = !lineData.isWordSyncExpanded;
+            renderWorkspace();
+        }
+
+        if (e.target.closest('.get-start-btn')) {
+            lineData.start = formatTime(wavesurfer.getCurrentTime());
+            validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
+            renderWorkspace();
+        }
+
+        if (e.target.closest('.get-end-btn')) {
+            lineData.end = formatTime(wavesurfer.getCurrentTime());
+            validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
+            renderWorkspace();
+        }
+
+        if (e.target.closest('.delete-btn')) {
+            if (confirm("Are you sure you want to delete this line?")) {
+                lineArray = lineArray.filter(l => l.id !== card.dataset.id);
+                renderWorkspace();
+            }
+        }
+
+        if (e.target.closest('.play-line-btn')) {
+            if (wavesurfer.getDuration() > 0) {
+                wavesurfer.setTime(parseTime(lineData.start));
+                wavesurfer.play();
+            }
+        }
+
+        if (e.target.closest('.get-word-btn')) {
+            const wordCard = e.target.closest('.word-card');
+            const word = lineData.words.find(w => w.id === wordCard.dataset.id);
+            word.time = formatTime(wavesurfer.getCurrentTime());
+            validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
+            renderWorkspace();
+            return;
+        }
+
+        const wordCardClick = e.target.closest('.word-card');
+        if (wordCardClick && e.target.tagName.toLowerCase() !== 'input') {
+            const word = lineData.words.find(w => w.id === wordCardClick.dataset.id);
+            const timeStr = word.time.trim() === '' ? lineData.start : word.time;
+            if (wavesurfer.getDuration() > 0) {
+                wavesurfer.setTime(parseTime(timeStr));
+                wavesurfer.play();
+            }
+        }
+    })
+
     const audioFile = document.getElementById('audioFile');
     audioFile.addEventListener('click', (e) => {
         const existingLines = document.querySelectorAll('.line-card');
         if (existingLines.length > 0) {
             if (confirm("Workspace is not empty. Load a new audio file?")) {
-                existingLines.forEach(l => l.remove());
+                lineArray = [];
+                renderWorkspace();
                 if (wavesurfer.getDuration() > 0) wavesurfer.setTime(0);
                 document.dispatchEvent(new Event('input', {bubbles:true}));
             } else e.preventDefault();
@@ -125,58 +419,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.querySelectorAll('.active-preview-word').forEach(w => w.classList.remove('active-preview-word'));
 
-            const lines = document.querySelectorAll('.line-card');
-            lines.forEach((line,index) => {
-                const start = parseTime(line.querySelector('.line-start').value);
-                const end = parseTime(line.querySelector('.line-end').value) || wavesurfer.getDuration();
-                if (currentTime >= start && currentTime < end) {
-                    line.classList.add('current-line');
+            lineArray.forEach((l, i) => {
+                const lineCard = document.querySelector(`.line-card[data-id="${l.id}"]`);
+                if (!lineCard) return;
 
-                    const wordCards = line.querySelectorAll('.word-card');
-                    const displaySpans = line.querySelectorAll('.lyric-display span');
+                const start= parseTime(l.start);
+                const end = parseTime(l.end) || wavesurfer.getDuration();
 
-                    const prevLineSpan = document.getElementById(`prev-l${index}`);
-                    if (prevLineSpan && wordCards.length === 0) prevLineSpan.classList.add('active-preview-word');
+                if (currentTime >= start && currentTime <= end) {
+                    lineCard.classList.add('current-line');
+                    const wordCards = lineCard.querySelectorAll('.word-card');
+                    const dispSpans = lineCard.querySelectorAll('.lyric-display span');
+                    const prevLineSpan = document.getElementById(`prev-l${i}`);
 
-                    let hasWordTimestamps = false;
-                    for (let i = 1; i < wordCards.length; i++) {
-                        if (wordCards[i].querySelector('.word-start').value.trim() !== '') {
-                            hasWordTimestamps = true;
-                            break;
+                    if (prevLineSpan && l.words.length === 0) prevLineSpan.classList.add('active-preview-word');
+
+                    let hasWordTime = l.words.some(w => w.time.trim() !== '');
+                    let activeTime = -1;
+
+                    for (let index = l.words.length-1; i >= 0; index--) {
+                        if (l.words[index].time.trim() !== '') {
+                            const ws = parseTime(l.words[index].time);
+                            if (currentTime >= ws) {activeTime = ws; break;}
                         }
                     }
 
-                    let activeTimestamp = -1;
-                    for (let i = wordCards.length - 1; i >= 0; i--) {
-                        const wsStr = wordCards[i].querySelector('.word-start').value.trim();
-                        if (wsStr !== '') {
-                            const ws = parseTime(wsStr);
-                            if (currentTime >= ws) {
-                                activeTimestamp = ws;
-                                break;
-                            }
-                        }
-                    }
+                    l.words.forEach((wordData, index) => {
+                        const wsStr = wordData.time.trim();
+                        const spanEl = dispSpans[index];
+                        const wordCard = wordCards[index];
 
-                    for (let i = 0; i < wordCards.length; i++) {
-                        const wsStr = wordCards[i].querySelector('.word-start').value.trim();
-                        const spanEl = displaySpans[i];
+                        const highlight = !hasWordTime || (wsStr !== '' && parseTime(wsStr) === activeTime);
 
-                        if (!hasWordTimestamps || (wsStr !=='' && parseTime(wsStr) === activeTimestamp)) {
-                            wordCards[i].classList.add('active-word-card');
+                        if (highlight) {
+                            if (wordCard) wordCard.classList.add('active-word-card');
                             if (spanEl) spanEl.classList.add('active-word');
-                            const prevWordSpan = document.getElementById(`prev-l${index}-w${i}`);
+                            const prevWordSpan = document.getElementById(`prev-l${i}-w${index}`);
                             if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
                         } else {
-                            wordCards[i].classList.remove('active-word-card');
+                            if (wordCard) wordCard.classList.remove('active-word-card');
                             if (spanEl) spanEl.classList.remove('active-word');
                         }
-                    }
-
+                    })
                 } else {
-                    line.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word'));
-                    line.querySelectorAll('.active-word-card').forEach(el => el.classList.remove('active-word-card'));
-                    line.classList.remove('current-line');
+                    lineCard.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word'));
+                    lineCard.querySelectorAll('.active-word-card').forEach(el => el.classList.remove('active-word-card'));
+                    lineCard.classList.remove('current-line');
                 }
             })
         });
@@ -249,267 +537,20 @@ document.addEventListener('DOMContentLoaded', () => {
             updSliderFill(volumeSlider, savedVol);
         }
     });
-
-    const linesContainer = document.getElementById('lines');
+    
     const addLineBtn = document.getElementById('addLineBtn');
     addLineBtn.disabled = true;
     addLineBtn.title = "Please open an audio file first!";
     const setTimeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="m12 11.6l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T10 11.975V8q0-.425.288-.712T11 7t.713.288T12 8zM18 6h-2q-.425 0-.712-.287T15 5t.288-.712T16 4h2V2q0-.425.288-.712T19 1t.713.288T20 2v2h2q.425 0 .713.288T23 5t-.288.713T22 6h-2v2q0 .425-.288.713T19 9t-.712-.288T18 8zM7.488 20.3q-1.638-.7-2.863-1.925T2.7 15.512T2 12t.7-3.512t1.925-2.863T7.488 3.7T11 3q.275 0 .513.013t.512.062q.425 0 .713.288t.287.712t-.288.713t-.712.287q-.275 0-.513-.038T11 5Q8.05 5 6.025 7.025T4 12t2.025 4.975T11 19t4.975-2.025T18 12q0-.425.288-.712T19 11t.713.288T20 12q0 1.875-.7 3.513t-1.925 2.862t-2.863 1.925T11 21t-3.512-.7" /></svg>`
 
-    const enforceFormat = (el) => {
-        el.addEventListener('input', (e) => {
-            let digits = e.target.value.replace(/\D/g, '');
-            digits = digits.substring(0,6);
-            let formatted = '';
-            for (let i = 0; i < digits.length; i++) {
-                if (i === 2) {
-                    formatted += ':';
-                    if (parseInt(digits[i]) > 5) {
-                        digits = digits.substring(0,i) + '5' + digits.substring(i+1);
-                    }
-                }
-                if (i === 4) formatted += '.';
-                formatted += digits[i];
-            }
-            e.target.value = formatted;
-        })
-    }
-
     addLineBtn.addEventListener('click', () => {
-        const existingLines = document.querySelectorAll('.line-card');
-
-        let defaultTime = "00:00.00"
-        if (existingLines.length > 0) {
-            const lastLine = existingLines[existingLines.length - 1];
-            const lastWords = lastLine.querySelectorAll('.word-start');
-            defaultTime = lastWords.length > 0 ? lastWords[lastWords.length-1].value : lastLine.querySelector('.line-start').value || "00:00.00";
+        let defaultTime = '00:00.00';
+        if (lineArray.length > 0) {
+            const lastLine = lineArray[lineArray.length-1];
+            defaultTime = lastLine.words.length > 0 ? lastLine.words[lastLine.words.length-1].time : lastLine.start || '00:00.00';
         }
-
-        const lineCard = document.createElement('div');
-        lineCard.className = 'line-card';
-
-        lineCard.innerHTML = `
-            <div class="line-main-row">
-                <div class="time-wrapper">
-                    <div class="time-field" title="Line start time">
-                        <input type="text" class="time-input line-start" placeholder="00:00.00" value="${defaultTime}">
-                        <button type="button" class="time-btn get-start-btn">${setTimeIcon}</button>
-                    </div>
-                    <div class="time-field" title="Line end time">
-                        <input type="text" class="time-input line-end" placeholder="00:00.00" value="${defaultTime}">
-                        <button type="button" class="time-btn get-end-btn">${setTimeIcon}</button>
-                    </div>
-                </div>
-                <div class="lyric-wrapper">
-                    <input type="text" class="lyric-input" placeholder="Enter lyric line here...">
-                    <div class="lyric-display"></div>
-                </div>
-                <div class="line-actions">
-                    <button type="button" class="action-btn play-line-btn" title="Play line">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="m10.65 15.75l4.875-3.125q.35-.225.35-.625t-.35-.625L10.65 8.25q-.375-.25-.763-.038t-.387.663v6.25q0 .45.388.663t.762-.038M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg>
-                    </button>
-                    <button type="button" class="action-btn delete-btn" title="Delete line">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6q-.425 0-.712-.288T4 5t.288-.712T5 4h4q0-.425.288-.712T10 3h4q.425 0 .713.288T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM7 6v13zm5 7.9l1.9 1.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7l-1.9-1.9l1.9-1.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 11.1l-1.9-1.9q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l1.9 1.9l-1.9 1.9q-.275.275-.275.7t.275.7t.7.275t.7-.275z"/></svg>
-                    </button>
-                    <button type="button" class="action-btn expand-btn" title="Word-by-word syncing">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="m6.8 13l2.9 2.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-4.6-4.6q-.15-.15-.213-.325T3.426 12t.063-.375t.212-.325l4.6-4.6q.275-.275.7-.275t.7.275t.275.7t-.275.7L6.8 11H19V8q0-.425.288-.712T20 7t.713.288T21 8v3q0 .825-.587 1.413T19 13z"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="word-sync-container" style="display: none;"></div>
-        `;
-
-        const startInput = lineCard.querySelector('.line-start');
-        enforceFormat(startInput);
-        const getStartBtn = lineCard.querySelector('.get-start-btn');
-        const endInput = lineCard.querySelector('.line-end');
-        enforceFormat(endInput);
-        const getEndBtn = lineCard.querySelector('.get-end-btn');
-        const lyricInput = lineCard.querySelector('.lyric-input');
-        const playLineBtn = lineCard.querySelector('.play-line-btn');
-        const deleteBtn = lineCard.querySelector('.delete-btn');
-        const expandBtn = lineCard.querySelector('.expand-btn');
-        const displayContainer = lineCard.querySelector('.lyric-display');
-        const wordContainer = lineCard.querySelector('.word-sync-container');
-
-        lyricInput.addEventListener('input', (e) => {
-            if (/[<>]/.test(e.target.value)) e.target.value = e.target.value.replace(/[<>]/g, '');
-        });
-
-        const setTime = (el) => {
-            el.value = formatTime(wavesurfer.getCurrentTime());
-        }
-
-        const validateTimes = () => {
-            const prevCard = lineCard.previousElementSibling;
-            const nextCard = lineCard.nextElementSibling;
-            let startSec = parseTime(startInput.value);
-            let endSec = parseTime(endInput.value);
-            const duration = wavesurfer.getDuration();
-
-            if (duration > 0 && startSec > duration) {
-                startSec = duration;
-                startInput.value = formatTime(duration);
-            }
-
-            if (prevCard && prevCard.classList.contains('line-card')) {
-                const prevEnd = parseTime(prevCard.querySelector('.line-end').value);
-                if (startSec < prevEnd) {
-                    startInput.value = formatTime(prevEnd);
-                    startSec = prevEnd;
-                }
-            }
-
-            if (endSec < startSec) {
-                endInput.value = formatTime(startSec);
-                endSec = startSec;
-            }
-
-            if (duration > 0 && endSec > duration) {
-                endSec = duration;
-                endInput.value = formatTime(duration);
-            }
-
-            const firstWord = lineCard.querySelector('.word-start');
-            if (firstWord) {
-                firstWord.value = formatTime(startSec);
-                firstWord.dispatchEvent(new Event('blur'));
-            }
-
-            if (nextCard && nextCard.classList.contains('line-card')) {
-                const nextStartInput = nextCard.querySelector('.line-start');
-                if (endSec > parseTime(nextStartInput.value)) {
-                    nextStartInput.value = formatTime(endSec);
-                    nextStartInput.dispatchEvent(new Event('blur'));
-                }
-            }
-        }
-
-        startInput.addEventListener('blur', validateTimes);
-        endInput.addEventListener('blur', validateTimes);
-        getStartBtn.addEventListener('click', () => {setTime(startInput); validateTimes();})
-        getEndBtn.addEventListener('click', () => {setTime(endInput); validateTimes();})
-
-        playLineBtn.addEventListener('click', (e) => {
-            const startSec = parseTime(startInput.value);
-            if (wavesurfer.getDuration() > 0 && startSec <= wavesurfer.getDuration()) {
-                wavesurfer.setTime(startSec);
-                wavesurfer.play();
-            }
-            e.currentTarget.blur();
-        });
-
-        deleteBtn.addEventListener('click', () => {
-            if (confirm("Are you sure you want to delete this line?")) {
-                lineCard.remove();
-                document.dispatchEvent(new Event('input', {bubbles:true}))
-            }
-        });
-
-        expandBtn.addEventListener('click', () => {
-            const isHidden = wordContainer.style.display === 'none';
-            wordContainer.style.display = isHidden ? 'flex' : 'none';
-        });
-
-        displayContainer.addEventListener('click', () => {
-            lineCard.classList.add('is-editing');
-            lyricInput.focus();
-        });
-
-        lyricInput.addEventListener('focus', () => {
-            lineCard.classList.add('is-editing');
-        })
-
-        lyricInput.addEventListener('blur', () => {
-            lineCard.classList.remove('is-editing');
-        });
-
-        lyricInput.addEventListener('change', () => {
-            const text = lyricInput.value.trim();
-            const words = text ? text.split(/\s+/) : [];
-
-            wordContainer.innerHTML = '';
-            displayContainer.innerHTML = '';
-
-            if (words.length === 0) wordContainer.style.display = 'none';
-
-            words.forEach((word, index) => {
-                const defaultWordTime = index === 0 ? startInput.value : '';
-                const displaySpan = document.createElement('span');
-                displaySpan.textContent = word;
-                displayContainer.appendChild(displaySpan);
-
-                const wordCard = document.createElement('div');
-                wordCard.className = 'word-card';
-                wordCard.title = `Jump to word`;
-                wordCard.innerHTML = `
-                    <span class="word-text" title="Jump to word">${word}</span>
-                    <div class="time-field">
-                        <input type="text" class="time-input word-start" placeholder="00:00.00" value="${defaultWordTime}">
-                        <button type="button" class="time-btn get-word-btn">${setTimeIcon}</button>
-                    </div>
-                `;
-
-                const wordTimeInput = wordCard.querySelector('.word-start');
-                const getWordBtn = wordCard.querySelector('.get-word-btn');
-                enforceFormat(wordTimeInput);
-
-                const validateWordTime = () => {
-                    let wordSec = parseTime(wordTimeInput.value);
-                    const lineStartSec = parseTime(startInput.value);
-                    const nextCard = lineCard.nextElementSibling;
-                    const duration = wavesurfer.getDuration();
-
-                    if (duration > 0 && wordSec > duration) {
-                        wordSec = duration;
-                        wordTimeInput.value = formatTime(duration);
-                    }
-
-                    const prevWord = wordCard.previousElementSibling;
-                    if (prevWord && prevWord.classList.contains('word-card')) {
-                        const prevWordSec = parseTime(prevWord.querySelector('.word-start').value);
-                        if (wordSec< prevWordSec) {
-                            wordSec = prevWordSec;
-                            wordTimeInput.value = formatTime(prevWordSec);
-                        }
-                    } else if (wordSec < lineStartSec) {
-                        wordSec = lineStartSec;
-                        wordTimeInput.value = formatTime(lineStartSec);
-                    }
-
-                    const nextWord = wordCard.nextElementSibling;
-                    if (nextWord && nextWord.classList.contains('word-card')) {
-                        const nextWordInput = nextWord.querySelector('.word-start');
-                        if (wordSec > parseTime(nextWordInput.value)) {
-                            nextWordInput.value = formatTime(wordSec);
-                            nextWordInput.dispatchEvent(new Event('blur'));
-                        }
-                    } else if (wordSec > parseTime(endInput.value)) {
-                        wordSec = parseTime(endInput.value);
-                        wordTimeInput.value = formatTime(wordSec);
-                    }
-                }
-
-                wordTimeInput.addEventListener('blur', validateWordTime);
-                getWordBtn.addEventListener('click', () => {
-                    setTime(wordTimeInput);
-                    validateWordTime();
-                });
-
-                wordCard.addEventListener('click', (e) => {
-                    if (e.target.closest('input') || e.target.closest('button')) return;
-                    const timeInput = wordTimeInput.value.trim() === '' ? startInput.value : wordTimeInput.value;
-                    const wordStartSec = parseTime(timeInput);
-                    if (wavesurfer.getDuration() > 0) {
-                        wavesurfer.setTime(wordStartSec);
-                        wavesurfer.play();
-                    }
-                })
-
-                wordContainer.appendChild(wordCard);
-            });
-        });
-        linesContainer.appendChild(lineCard);
+        lineArray.push(createNewLine(defaultTime));
+        renderWorkspace();
     });
 
     const previewContainer = document.querySelector('.preview')
@@ -524,31 +565,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (artist) elrc += `[ar:${artist}]\n`;
         if (album) elrc += `[al:${album}]\n`;
 
-        document.querySelectorAll('.line-card').forEach((l, lineI) => {
-            const start = l.querySelector('.line-start').value;
-            const end = l.querySelector('.line-end').value;
-            const words = l.querySelectorAll('.word-card');
-
-            if (words.length > 0) {
-                let lineStr = `[${start}]`;
-                words.forEach((w, wordI) => {
-                    const time = w.querySelector('.word-start').value.trim();
-                    const text = w.querySelector('.word-text').textContent;
-                    if (forPreview) lineStr += `<span id="prev-l${lineI}-w${wordI}">${time ? `&lt;${time}&gt;` : ''}${text}</span> `;
-                    else lineStr += `${time ? `<${time}>` : ''}${text} `;
+        lineArray.forEach((l, i) => {
+            if (l.words.length > 0) {
+                let lineStr = `[${l.start}]`;
+                l.words.forEach((w, j) => {
+                    let time = w.time.trim();
+                    if (j === 0 && time === '') time = l.start;
+                    if (forPreview) lineStr += `<span id="prev-l${i}-w${j}">${time ? `&lt;${time}&gt;` : ''}${w.text}</span> `;
+                    else lineStr += `${time ? `<${time}>` : ''}${w.text} `;
                 });
                 elrc += lineStr.trimEnd() + '\n';
             } else {
-                const text = l.querySelector('.lyric-input').value.trim();
-                if (forPreview) elrc += `<span id="prev-l${lineI}">[${start}]${text}</span>\n`;
-                else elrc += `[${start}]${text}\n`;
+                if (forPreview) elrc += `<span id="prev-l${i}">[${l.start}]${l.text}</span>\n`;
+                else elrc += `[${l.start}]${l.text}\n`;
             }
 
-            if (end && end !== "00:00.00" && end !== start) {
-                if (forPreview) elrc += `<span>[${end}]</span>\n`;
-                else elrc += `[${end}]\n`;
+            if (l.end && l.end !== '00:00.00' && l.end !== l.start) {
+                if (forPreview) elrc += `<span>[${l.end}]</span>\n`;
+                else elrc += `[${l.end}]\n`;
             }
-        });
+        })
         return elrc;
     }
 
@@ -561,11 +597,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportELRC').addEventListener('click', () => {
         const data = generateELRC();
         if (!data) return;
+
+        const audio = document.getElementById('audioFile');
+        let title = 'synced_lyrics';
+
+        if (audio.files.length > 0) title = audio.files[0].name.replace(/\.[^/.]+$/, '');
+        else {
+            const titleInput = document.getElementById('trackTitle').value.trim();
+            if (titleInput) title = titleInput;
+        }
+
         const blob = new Blob([data], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const title = document.getElementById('trackTitle').value.trim() || 'synced_lyrics';
         a.download = `${title}.lrc`;
         document.body.appendChild(a);
         a.click();
@@ -664,30 +709,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleInput = document.getElementById('trackTitle');
         const artistInput = document.getElementById('trackArtist');
         const albumInput = document.getElementById('trackAlbum');
-        const addLineBtn = document.getElementById('addLineBtn');
-        document.querySelectorAll('.line-card').forEach(l => l.remove());
+
+        lineArray = [];
 
         if (file.name.endsWith('.txt')) {
-            let lineCount = 0;
+            let lastTime = '00:00.00';
             lines.forEach(l => {
                 const trimmed = l.trim();
                 if (!trimmed) return;
-
-                addLineBtn.click();
-                const newCards = document.querySelectorAll('.line-card');
-                const newCard = newCards[newCards.length-1];
-                const lineStartInput = newCard.querySelector('.line-start');
-                if (lineCount > 0) {
-                    const prevCard = newCards[newCards.length-2];
-                    lineStartInput.value = prevCard.querySelector('.line-start').value;
-                }
-                lineStartInput.dispatchEvent(new Event('blur'));
-
-                const lyricInput = newCard.querySelector('.lyric-input');
-                lyricInput.value = trimmed;
-                lyricInput.dispatchEvent(new Event('change'));
-                lyricInput.dispatchEvent(new Event('input', {bubbles:true}));
-                lineCount++;
+                const newLine = createNewLine(lastTime);
+                newLine.text = trimmed;
+                newLine.words = trimmed.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: '', text: word}));
+                lineArray.push(newLine);
             });
         } else {
             lines.forEach(l => {
@@ -709,51 +742,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     let content = lineMatch[2];
 
                     if (content.trim() === '') {
-                        const existingCards = document.querySelectorAll('.line-card');
-                        if (existingCards.length > 0) {
-                            const lastCard = existingCards[existingCards.length-1];
-                            const lineEndInput = lastCard.querySelector('.line-end');
-                            lineEndInput.value = lineTime;
-                            lineEndInput.dispatchEvent(new Event('blur'));
-                        }
+                        if (lineArray.length > 0) lineArray[lineArray.length - 1].end = lineTime;
                         return;
                     }
 
-                    addLineBtn.click();
-                    const newCards = document.querySelectorAll('.line-card');
-                    const newCard = newCards[newCards.length - 1];
-
-                    const lineStartInput = newCard.querySelector('.line-start');
-                    lineStartInput.value = lineTime;
-                    lineStartInput.dispatchEvent(new Event('blur'));
-
-                    const lyricInput = newCard.querySelector('.lyric-input');
+                    const newLine = createNewLine(lineTime);
                     const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
                     let wordMatch;
-                    const words = [];
 
-                    if (content.includes('<') && content.includes('>')) while ((wordMatch = wordRegex.exec(content)) !== null) words.push({ time: wordMatch[1], text: wordMatch[2].trim() });
-
-                    if (words.length > 0) {
-                        lyricInput.value = words.map(w => w.text).join(' ');
-                        lyricInput.dispatchEvent(new Event('change'));
-
-                        const wordCards = newCard.querySelectorAll('.word-card');
-                        words.forEach((wData, i) => {
-                            if (wordCards[i]) {
-                                const wordInput = wordCards[i].querySelector('.word-start');
-                                wordInput.value = wData.time;
-                                wordInput.dispatchEvent(new Event('blur'));
-                            }
-                        });
-                    } else {
-                        lyricInput.value = content;
-                        lyricInput.dispatchEvent(new Event('change'));
-                        lyricInput.dispatchEvent(new Event('input', {bubbles:true}));
+                    if (content.includes('<') && content.includes('>')) {
+                        while ((wordMatch = wordRegex.exec(content)) !== null) {
+                            newLine.words.push({id: crypto.randomUUID(), time: wordMatch[1], text: wordMatch[2].trim()});
+                        }
                     }
+
+                    if (newLine.words.length > 0) newLine.text = newLine.words.map(w => w.text).join(' ');
+                    else {
+                        newLine.text = content;
+                        newLine.words = content.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: '', text: word}));
+                    }
+                    lineArray.push(newLine);
                 }
             })
         }
+        renderWorkspace();
+        updatePreview();
         e.target.value = '';
     })
 });
