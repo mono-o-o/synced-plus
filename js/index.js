@@ -705,15 +705,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const lineMatch = l.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](.*)$/);
                 if (lineMatch) {
-                    const lineStart = lineMatch[1];
+                    const lineTime = lineMatch[1];
                     let content = lineMatch[2];
+
+                    if (content.trim() === '') {
+                        const existingCards = document.querySelectorAll('.line-card');
+                        if (existingCards.length > 0) {
+                            const lastCard = existingCards[existingCards.length-1];
+                            const lineEndInput = lastCard.querySelector('.line-end');
+                            lineEndInput.value = lineTime;
+                            lineEndInput.dispatchEvent(new Event('blur'));
+                        }
+                        return;
+                    }
 
                     addLineBtn.click();
                     const newCards = document.querySelectorAll('.line-card');
                     const newCard = newCards[newCards.length - 1];
 
                     const lineStartInput = newCard.querySelector('.line-start');
-                    lineStartInput.value = lineStart;
+                    lineStartInput.value = lineTime;
                     lineStartInput.dispatchEvent(new Event('blur'));
 
                     const lyricInput = newCard.querySelector('.lyric-input');
