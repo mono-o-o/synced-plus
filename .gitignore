@@ -1,0 +1,14 @@
+.idea/
+shelf/
+workspace.xml
+httpRequests/
+queries/
+dataSources/
+dataSources.local.xml
+node_modules/
+.npm/
+*.log
+src-tauri/target/
+src-tauri/gen/
+.env
+.env*.local

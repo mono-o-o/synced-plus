@@ -4,7 +4,12 @@
   "description": "",
   "main": "js/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "echo 'No dev server needed' && exit 0",
+    "tauri": "tauri"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.3"
+  }
 }

@@ -1,0 +1,7 @@
+The third-party libraries used in synced+ are:
+
+wavesurfer.js@7.12.8
+
+jsmediatags@3.9.7
+
+and are governed by the licenses found in [LICENSES.md](LICENSES.md).
