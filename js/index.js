@@ -746,7 +746,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 wordInput.dispatchEvent(new Event('blur'));
                             }
                         });
-                        newCard.querySelector('.word-sync-container').style.display = 'flex';
                     } else {
                         lyricInput.value = content;
                         lyricInput.dispatchEvent(new Event('change'));
