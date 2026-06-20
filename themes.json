@@ -12,6 +12,18 @@
     }
   },
   {
+    "id": "evil-cammy",
+    "name": "Evil Calamity",
+    "colors": {
+      "--accent-primary": "#a61919",
+      "--accent-secondary": "#3d0a0a",
+      "--accent-tertiary": "#6b0f0f",
+      "--accent-bg": "#0f0f0f",
+      "--accent-srf": "#1a1a1a",
+      "--accent-txt": "#f0f0f0"
+    }
+  },
+  {
     "id": "gruvbox-material-light",
     "name": "Gruvbox Material Light",
     "colors": {
