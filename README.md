@@ -1,6 +1,6 @@
 # <img src="img/synced-plus-logo-full.png" style="height: 3rem"></img>
 
-A minimal, browser-based Enhanced LRC creator. Simply import your audio and optional LRC/TXT, and start syncing lyrics line-by-line and/or word-by-word.
+A minimal, completely local, cross-platform, and browser compatible Enhanced LRC creator. Simply import your audio and optional LRC/TXT, and start syncing lyrics line-by-line and/or word-by-word.
 
 ## Screenshots
 
@@ -20,6 +20,10 @@ A minimal, browser-based Enhanced LRC creator. Simply import your audio and opti
 ### <strong>Specifically for ELRC</strong>
 
 Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
+
+### <strong>Completely Offline</strong>
+
+Works completely within your system, does not send any data into a server.
 
 ### <strong>Interactive Waveform</strong>
 
@@ -63,8 +67,10 @@ synced+ is written in vanilla HTML/CSS/JS, but it does use two crucial libraries
 * <a href="https://wavesurfer.xyz">wavesurfer.js</a> - Waveform rendering, playback controls, current playback time fetching.
 * <a href="https://github.com/aadsm/jsmediatags">jsmediatags</a> - Reading and writing of audio metadata tags for files supported by the library.
 
+Additionally, it uses <a href="https://v2.tauri.app">Tauri</a> to work as a desktop application.
+
 ## License
 
 synced+ is licensed under the GNU AGPLv3 License. See the [LICENSE](LICENSE) file for details.
 
-For full legal notices, copyright, discolsures, and open-source attributions regarding the assets used, see [LICENSES.md](LICENSES.md).
+For full legal notices, copyright, disclosures, and open-source attributions regarding the assets used, see [LICENSES.md](LICENSES.md).
