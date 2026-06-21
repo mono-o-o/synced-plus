@@ -1,4 +1,4 @@
-# <img src="img/synced-plus-logo-full.png" style="height: 3rem"></img>
+# <img src="src/img/synced-plus-logo-full.png" style="height: 3rem"></img>
 
 A minimal, completely local, cross-platform, and browser compatible Enhanced LRC creator. Simply import your audio and optional LRC/TXT, and start syncing lyrics line-by-line and/or word-by-word.
 
