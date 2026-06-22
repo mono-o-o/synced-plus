@@ -484,6 +484,20 @@ document.addEventListener('DOMContentLoaded', () => {
     rewindBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() - 1));});
     fastFwdBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() + 1))});
 
+    const slowDownBtn = document.getElementById('slowDownBtn');
+    const speedUpBtn = document.getElementById('speedUpBtn');
+    const speedDisplay = document.getElementById('speedDisplay');
+    speedDisplay.textContent = `${wavesurfer.getPlaybackRate().toFixed(2)}x`;
+    slowDownBtn.addEventListener('click', () => {
+        wavesurfer.setPlaybackRate(wavesurfer.getPlaybackRate() - 0.25);
+        speedDisplay.textContent = `${wavesurfer.getPlaybackRate().toFixed(2)}x`;
+    });
+    speedUpBtn.addEventListener('click', () => {wavesurfer.setPlaybackRate(
+        wavesurfer.getPlaybackRate() + 0.25);
+        speedDisplay.textContent = `${wavesurfer.getPlaybackRate().toFixed(2)}x`;
+    });
+
+
     const volumeSlider = document.getElementById('volume');
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {muteBtn.classList.add('vol-full')}

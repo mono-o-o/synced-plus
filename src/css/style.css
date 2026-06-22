@@ -449,6 +449,31 @@ header button {
     color: var(--accent-txt);
 }
 
+.speed-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.speed-wrapper button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgb(from var(--accent-txt) r g b / 0.5);
+    transition: color var(--transition-fast);
+}
+
+.speed-wrapper button:hover {
+    color: var(--accent-txt);
+}
+
+#speedDisplay {
+    color: var(--accent-txt);
+    font-family: 'Fira Code', monospace;
+    font-weight: 500;
+    font-size: var(--text-sm);
+}
+
 .volume-wrapper {
     display: flex;
     align-items: center;
