@@ -285,11 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
             card.querySelector('.lyric-input').focus();
         }
 
-        if (e.target.closest('.delete-btn')) {
-            lineArray = lineArray.filter(l => l.id !== card.dataset.id);
-            renderWorkspace();
-        }
-
         if (e.target.closest('.expand-btn')) {
             lineData.isWordSyncExpanded = !lineData.isWordSyncExpanded;
             renderWorkspace();
