@@ -415,60 +415,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let animFrameId = null;
+    let lastActiveLineId = null;
     wavesurfer.on('timeupdate', (currentTime) => {
         if (animFrameId) return;
         animFrameId = requestAnimationFrame(() => {
             animFrameId = null;
             currTime.textContent = formatTime(currentTime);
 
-            document.querySelectorAll('.active-preview-word').forEach(w => w.classList.remove('active-preview-word'));
-
-            lineArray.forEach((l, i) => {
-                const lineCard = document.querySelector(`.line-card[data-id="${l.id}"]`);
-                if (!lineCard) return;
-
-                const start= parseTime(l.start);
+            const activeIndex = lineArray.findIndex(l => {
+                const start = parseTime(l.start);
                 const end = parseTime(l.end) || wavesurfer.getDuration();
+                return currentTime >= start && currentTime <= end;
+            });
 
-                if (currentTime >= start && currentTime <= end) {
-                    lineCard.classList.add('current-line');
-                    const wordCards = lineCard.querySelectorAll('.word-card');
-                    const dispSpans = lineCard.querySelectorAll('.lyric-display span');
-                    const prevLineSpan = document.getElementById(`prev-l${i}`);
+            const activeLine = activeIndex !== -1 ? lineArray[activeIndex] : null;
 
-                    if (prevLineSpan && l.words.length === 0) prevLineSpan.classList.add('active-preview-word');
+            if (lastActiveLineId !== (activeLine ? activeLine.id : null)) {
+                document.querySelectorAll('.current-line').forEach(el => el.classList.remove('current-line'));
+                document.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word'));
+                document.querySelectorAll('.active-word-card').forEach(el => el.classList.remove('active-word-card'));
+                document.querySelectorAll('.active-preview-word').forEach(el => el.classList.remove('active-preview-word'));
+                lastActiveLineId = activeLine ? activeLine.id : null;
+            }
 
-                    let hasWordTime = l.words.some(w => w.time.trim() !== '');
-                    let activeTime = -1;
+            if (!activeLine) return;
+            const lineCard = document.querySelector(`.line-card[data-id="${activeLine.id}"]`);
+            if (!lineCard) return;
+            lineCard.classList.add('current-line');
 
-                    for (let index = l.words.length-1; i >= 0; index--) {
-                        if (l.words[index].time.trim() !== '') {
-                            const ws = parseTime(l.words[index].time);
-                            if (currentTime >= ws) {activeTime = ws; break;}
-                        }
-                    }
+            const wordCards = lineCard.querySelectorAll('.word-card');
+            const dispSpans = lineCard.querySelectorAll('.lyric-display span');
+            const prevLineSpan = document.getElementById(`prev-l${activeIndex}`);
+            if (prevLineSpan && activeLine.words.length === 0) prevLineSpan.classList.add('active-preview-word');
+            let hasWordTime = activeLine.words.some(w => w.time.trim() !== '');
+            let activeTime = -1;
 
-                    l.words.forEach((wordData, index) => {
-                        const wsStr = wordData.time.trim();
-                        const spanEl = dispSpans[index];
-                        const wordCard = wordCards[index];
+            for (let index = activeLine.words.length-1; index >= 0; index--) {
+                if (activeLine.words[index].time.trim() !== '') {
+                    const ws = parseTime(activeLine.words[index].time);
+                    if (currentTime >= ws) {activeTime = ws; break;}
+                }
+            }
 
-                        const highlight = !hasWordTime || (wsStr !== '' && parseTime(wsStr) === activeTime);
+            activeLine.words.forEach((wordData, index) => {
+                const wsStr = wordData.time.trim();
+                const spanEl = dispSpans[index];
+                const wordCard = wordCards[index];
+                const prevWordSpan = document.getElementById(`prev-l${activeIndex}-w${index}`);
+                const highlight = !hasWordTime || (wsStr !== '' && parseTime(wsStr) === activeTime);
 
-                        if (highlight) {
-                            if (wordCard) wordCard.classList.add('active-word-card');
-                            if (spanEl) spanEl.classList.add('active-word');
-                            const prevWordSpan = document.getElementById(`prev-l${i}-w${index}`);
-                            if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
-                        } else {
-                            if (wordCard) wordCard.classList.remove('active-word-card');
-                            if (spanEl) spanEl.classList.remove('active-word');
-                        }
-                    })
+                if (highlight) {
+                    if (wordCard) wordCard.classList.add('active-word-card');
+                    if (spanEl) spanEl.classList.add('active-word');
+                    if (prevWordSpan) prevWordSpan.classList.add('active-preview-word');
                 } else {
-                    lineCard.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word'));
-                    lineCard.querySelectorAll('.active-word-card').forEach(el => el.classList.remove('active-word-card'));
-                    lineCard.classList.remove('current-line');
+                    if (wordCard) wordCard.classList.remove('active-word-card');
+                    if (spanEl) spanEl.classList.remove('active-word');
+                    if (prevWordSpan) prevWordSpan.classList.remove('active-preview-word');
                 }
             })
         });

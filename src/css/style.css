@@ -683,6 +683,12 @@ header button {
     border: 1px solid var(--accent-muted);
     padding: var(--space-2) var(--space-3);
     cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.word-card:hover {
+    border-color: var(--accent-primary);
+    background-color: var(--accent-secondary);
 }
 
 .word-text {
@@ -691,8 +697,8 @@ header button {
 
 .line-card.current-line {
     background-color: var(--accent-srf);
-    border-left: 4px solid var(--accent-primary);
-    box-shadow: 0 0 15px 0 var(--accent-secondary);
+    border: 1px solid var(--accent-primary);
+    box-shadow: 0 0 15px 0 rgb(from var(--accent-primary) r g b / 0.25);
     transition: all var(--transition-fast);
 }
 
@@ -748,8 +754,6 @@ header button {
     cursor: pointer;
     transition: color var(--transition-fast);
 }
-
-.word-text:hover {color: var(--accent-primary);}
 
 .line-actions {
     display: flex;
