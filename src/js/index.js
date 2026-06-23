@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currTime = document.getElementById('currentTime');
     const duration = document.getElementById('duration');
 
+    let loadedAudio = null;
+
     const formatTime = (seconds) => {
         if (isNaN(seconds)) return '00:00.00';
         const mins = Math.floor(seconds / 60);
@@ -355,6 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
     audioFile.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (loadedAudio) URL.revokeObjectURL(loadedAudio);
+
             const titleInput = document.getElementById('trackTitle');
             const artistInput = document.getElementById('trackArtist');
             const albumInput = document.getElementById('trackAlbum');
@@ -362,8 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
             titleInput.value = ''; artistInput.value = ''; albumInput.value = '';
             titleInput.dispatchEvent(new Event('input', {bubbles:true}));
 
-            const blobURL = URL.createObjectURL(file);
-            wavesurfer.load(blobURL);
+            loadedAudio = URL.createObjectURL(file);
+            wavesurfer.load(loadedAudio);
             window.jsmediatags.read(file, {
                 onSuccess: function(tag) {
                     const tags = tag.tags;
