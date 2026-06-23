@@ -703,6 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
             previewHeaderText.textContent = originalHeaderText;
             previewHeaderIcon.innerHTML = originalHeaderIcon;
         }
+        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen) ? 'none' : '';
     }
 
     const toggleExportMenu = (s) => {
@@ -717,6 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
             previewHeaderText.textContent = originalHeaderText;
             previewHeaderIcon.innerHTML = originalHeaderIcon;
         }
+        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen) ? 'none' : '';
     }
 
     document.getElementById('exportELRC').addEventListener('click', () => toggleExportMenu());
@@ -844,4 +846,71 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
         e.target.value = '';
     })
+
+    const sidebarHandler = () => {
+        const mobileQuery = window.matchMedia('(max-width: 1024px)');
+        const sidebar = document.createElement('aside');
+        sidebar.className = 'sidebar';
+        document.body.appendChild(sidebar);
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        sidebar.appendChild(overlay);
+
+        const menuBtn = document.createElement('button');
+        menuBtn.className = 'sidebar-btn';
+        menuBtn.title = 'Menu';
+        menuBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="M4 18q-.425 0-.712-.288T3 17t.288-.712T4 16h16q.425 0 .713.288T21 17t-.288.713T20 18zm0-5q-.425 0-.712-.288T3 12t.288-.712T4 11h16q.425 0 .713.288T21 12t-.288.713T20 13zm0-5q-.425 0-.712-.288T3 7t.288-.712T4 6h16q.425 0 .713.288T21 7t-.288.713T20 8z"/></svg>`
+
+        const header = document.querySelector('header');
+        header.insertBefore(menuBtn, header.firstChild);
+
+        const btnWrapper = document.querySelector('.header-btn-wrapper');
+        const trackInfo = document.querySelector('.track-info');
+        const previewHeader = document.querySelector('.preview-header');
+        const preview = document.querySelector('.preview');
+        const themeOverlay = document.querySelector('.theme-overlay');
+        const exportOverlay = document.querySelector('.export-overlay');
+        const placeholders = {
+            btnWrapper: document.createComment('btnWrapper'),
+            trackInfo: document.createComment('trackInfo'),
+            previewHeader: document.createComment('previewHeader'),
+            preview: document.createComment('preview'),
+            themeOverlay: document.createComment('themeOverlay'),
+            exportOverlay: document.createComment('exportOverlay')
+        }
+
+        btnWrapper.after(placeholders.btnWrapper);
+        trackInfo.after(placeholders.trackInfo);
+        previewHeader.after(placeholders.previewHeader);
+        preview.after(placeholders.preview);
+        themeOverlay.after(placeholders.themeOverlay);
+        exportOverlay.after(placeholders.exportOverlay);
+
+        const mobileHandler = (e) => {
+            if (e.matches) {
+                sidebar.appendChild(btnWrapper);
+                sidebar.appendChild(trackInfo);
+                sidebar.appendChild(previewHeader);
+                sidebar.appendChild(preview);
+                sidebar.appendChild(themeOverlay);
+                sidebar.appendChild(exportOverlay);
+            } else {
+                placeholders.btnWrapper.before(btnWrapper);
+                placeholders.trackInfo.before(trackInfo);
+                placeholders.previewHeader.before(previewHeader);
+                placeholders.preview.before(preview);
+                placeholders.themeOverlay.before(themeOverlay);
+                placeholders.exportOverlay.before(exportOverlay);
+                document.body.classList.remove('menu-open');
+            }
+        }
+
+        mobileQuery.addEventListener('change', mobileHandler);
+        mobileHandler(mobileQuery);
+
+        menuBtn.addEventListener('click', () => document.body.classList.add('menu-open'));
+        overlay.addEventListener('click', () => document.body.classList.remove('menu-open'));
+    }
+
+    sidebarHandler();
 });
