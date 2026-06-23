@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const previewContainer = document.querySelector('.preview')
 
-    const generateELRC = (forPreview = false) => {
+    const generateELRC = (forPreview = false, type = 'enhanced') => {
         const title = document.getElementById('trackTitle').value.trim();
         const artist = document.getElementById('trackArtist').value.trim();
         const album = document.getElementById('trackAlbum').value.trim();
@@ -586,7 +586,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     let time = w.time.trim();
                     if (j === 0 && time === '') time = l.start;
                     if (forPreview) lineStr += `<span id="prev-l${i}-w${j}">${time ? `&lt;${time}&gt;` : ''}${w.text}</span> `;
-                    else lineStr += `${time ? `<${time}>` : ''}${w.text} `;
+                    else {
+                        if (type === 'enhanced') lineStr += `${time ? `<${time}>` : ''}${w.text} `;
+                        else lineStr += `${w.text} `;
+                    }
                 });
                 elrc += lineStr.trimEnd() + '\n';
             } else {
@@ -645,22 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    document.getElementById('exportELRC').addEventListener('click', () => {
-        const data = generateELRC();
-        if (!data) return;
-
-        const audio = document.getElementById('audioFile');
-        let title = 'synced_lyrics';
-
-        if (audio.files.length > 0) title = audio.files[0].name.replace(/\.[^/.]+$/, '');
-        else {
-            const titleInput = document.getElementById('trackTitle').value.trim();
-            if (titleInput) title = titleInput;
-        }
-
-        saveFile(data, title);
-    });
-
     const themeSwitchBtn = document.getElementById('themeSwitch');
     const themeOverlay = document.querySelector('.theme-overlay');
     const previewHeader = document.querySelector('.preview-header');
@@ -670,10 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalHeaderText = previewHeaderText.textContent;
     const originalHeaderIcon = previewHeaderIcon.innerHTML;
 
-    const palettePath = "M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20";
-    const paletteIconHTML = `<path style="fill: var(--accent-primary)" d="${palettePath}" />`;
-
-    let isThemeMenuOpen = false;
+    const paletteIconHTML = `<path style="fill: var(--accent-primary)" d="M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20"/>`;
 
     const applyTheme = (theme) => {
         const root = document.documentElement;
@@ -694,9 +678,16 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', theme.id);
     }
 
+    let isThemeMenuOpen = false;
+    let isExportMenuOpen = false;
+
+    const exportOverlay = document.querySelector('.export-overlay');
+    const exportIconHTML = `<path style="fill: var(--accent-primary)" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z">`
+
     const toggleThemeMenu = (s) => {
         isThemeMenuOpen = s !== undefined ? s : !isThemeMenuOpen;
         if (isThemeMenuOpen) {
+            if (isExportMenuOpen) toggleExportMenu(false);
             themeOverlay.classList.add('is-active');
             previewHeaderText.textContent = 'Theme Selection';
             previewHeaderIcon.innerHTML = paletteIconHTML;
@@ -706,6 +697,40 @@ document.addEventListener('DOMContentLoaded', () => {
             previewHeaderIcon.innerHTML = originalHeaderIcon;
         }
     }
+
+    const toggleExportMenu = (s) => {
+        isExportMenuOpen = s !== undefined ? s : !isExportMenuOpen;
+        if (isExportMenuOpen) {
+            if (isThemeMenuOpen) toggleThemeMenu(false);
+            exportOverlay.classList.add('is-active');
+            previewHeaderText.textContent = 'Export Options';
+            previewHeaderIcon.innerHTML = exportIconHTML;
+        } else {
+            exportOverlay.classList.remove('is-active');
+            previewHeaderText.textContent = originalHeaderText;
+            previewHeaderIcon.innerHTML = originalHeaderIcon;
+        }
+    }
+
+    document.getElementById('exportELRC').addEventListener('click', () => toggleExportMenu());
+
+    const exportHandler = (type) => {
+        const data = generateELRC(false, type);
+        if (!data) return;
+        const audio = document.getElementById('audioFile');
+        let title = 'synced_lyrics';
+        if (audio.files.length > 0) title = audio.files[0].name.replace(/\.[^/.]+$/, "");
+        else {
+            const titleInput = document.getElementById('trackTitle').value.trim();
+            if (titleInput) title = titleInput;
+        }
+
+        saveFile(data, title);
+        toggleExportMenu(false);
+    }
+
+    document.getElementById('exportStandard').addEventListener('click', () => exportHandler('standard'));
+    document.getElementById('exportEnhanced').addEventListener('click', () => exportHandler('enhanced'));
 
     fetch('themes.json')
         .then(res => res.json())
