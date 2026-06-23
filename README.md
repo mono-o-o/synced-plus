@@ -6,7 +6,7 @@ A minimal, completely local, cross-platform, and browser compatible Enhanced LRC
 
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/d8b1911c-3a4a-419e-be73-2b8a4bb706f9" /></td>
+    <td><img src="https://github.com/user-attachments/assets/f19ebc27-1b43-4af7-b46d-e3dae767d527" /></td>
     <td><img src="https://github.com/user-attachments/assets/e01c62c4-85ae-4bdb-9417-c62e14f5f4ce" /></td>
   </tr>
   <tr align="center">
