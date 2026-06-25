@@ -11,9 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatTime = (seconds) => {
         if (isNaN(seconds)) return '00:00.00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        const msec = Math.round((seconds % 1) * 100);
+        const totalMsec = Math.round(seconds * 100);
+        const mins = Math.floor(totalMsec / 6000);
+        const secs = Math.floor((totalMsec % 6000) / 100);
+        const msec = totalMsec % 100;
         if (msec === 100) return formatTime(seconds + 1);
         const fMins = String(mins).padStart(2, '0');
         const fSecs = String(secs).padStart(2, '0');
