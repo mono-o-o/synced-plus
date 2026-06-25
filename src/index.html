@@ -10,12 +10,13 @@
     <script src="js/vendor/wavesurfer.min.js"></script>
     <script src="js/vendor/hover.min.js"></script>
     <script src="js/vendor/zoom.min.js"></script>
+    <script src="js/vendor/regions.min.js"></script>
     <script src="js/vendor/jsmediatags.min.js"></script>
-    <meta name="description" content="A minimal, browser-based ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
-    <meta name="keywords" content="ELRC, LRC, lyrics, lyrics sync, lyrics creator, lyrics generator, LRC generator, ELRC generator, synced lyrics, timed lyrics">
+    <meta name="description" content="A minimal, cross-platform, browser-compatible ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
+    <meta name="keywords" content="ELRC, LRC, lyrics, lyrics sync, lyrics creator, lyrics generator, LRC generator, ELRC generator, synced lyrics, timed lyrics, lrc parser">
     <meta property="og:type" content="website">
     <meta property="og:title" content="ELRC Creator | synced+">
-    <meta property="og:description" content="A minimal, browser-based ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
+    <meta property="og:description" content="A minimal, cross-platfor, browser-compatible ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
 </head>
 <body>
 <header>
@@ -73,6 +74,11 @@
             <input type="text" id="trackAlbum" placeholder="Album" title="[al:]">
         </div>
     </div>
+    <button type="button" id="metaBtn" title="More metadata fields">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M11.288 20.713Q11 20.425 11 20v-7H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7V4q0-.425.288-.712T12 3t.713.288T13 4v7h7q.425 0 .713.288T21 12t-.288.713T20 13h-7v7q0 .425-.288.713T12 21t-.712-.288" />
+        </svg>
+    </button>
 </div>
 
 <div class="preview-header">
@@ -170,6 +176,16 @@
             <span>Enhanced LRC</span>
         </div>
         <p>Provides line-by-line and word-by-word timestamping, but support is limited. Players like Namida support this format.</p>
+    </div>
+</div>
+<div class="meta-overlay">
+    <div class="info-field">
+        <label for="author">Creator:</label>
+        <input type="text" id="author" placeholder="Your Name" title="[by:]">
+    </div>
+    <div class="info-field">
+        <label for="offset">Offset (ms):</label>
+        <input type="number" id="offset" value="0" title="[offset:]">
     </div>
 </div>
 <script src="js/index.js"></script>

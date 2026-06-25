@@ -43,8 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
         plugins: [
             WaveSurfer.Zoom.create({
                 exponentialZooming: true,
-                maxZoom: 1000
-            })
+                maxZoom: 500
+            }),
+            wsRegions = WaveSurfer.Regions.create()
         ]
     });
 
@@ -60,6 +61,39 @@ document.addEventListener('DOMContentLoaded', () => {
             words: []
         }
     }
+
+    const syncRegions = () => {
+        wsRegions.clearRegions();
+        lineArray.forEach((l) => {
+            const startSec = parseTime(l.start);
+            const endSec = parseTime(l.end);
+            if (endSec > startSec) {
+                wsRegions.addRegion({
+                    id: l.id,
+                    start: startSec,
+                    end: endSec,
+                    color: `rgb(from var(--accent-txt) r g b / 0.2)`,
+                    drag: false,
+                    resize: true
+                })
+            }
+        })
+    }
+
+    wsRegions.on('region-updated', (r) => {
+        const lineData = lineArray.find(l => l.id === r.id);
+        if (lineData) {
+            lineData.start = formatTime(r.start);
+            lineData.end = formatTime(r.end);
+            renderWorkspace();
+        }
+    })
+
+    wsRegions.on('region-clicked', (r, e) => {
+        e.stopPropagation();
+        wavesurfer.setTime(r.start);
+        r.play(true);
+    })
 
     const renderWorkspace = () => {
         const linesContainer = document.getElementById('lines');
@@ -89,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="lyric-display"></div>
                         </div>
                         <div class="line-actions">
-                            <button type="button" class="action-btn play-line-btn" title="Play line">
+                            <button type="button" class="action-btn play-line-btn" title="Play from line">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24"><path fill="currentColor" d="m10.65 15.75l4.875-3.125q.35-.225.35-.625t-.35-.625L10.65 8.25q-.375-.25-.763-.038t-.387.663v6.25q0 .45.388.663t.762-.038M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/></svg>
                             </button>
                             <button type="button" class="action-btn delete-btn" title="Delete line">
@@ -153,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             }
         });
+
+        syncRegions();
     }
 
     const linesContainer = document.getElementById('lines');
@@ -311,7 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.play-line-btn')) {
             if (wavesurfer.getDuration() > 0) {
-                wavesurfer.setTime(parseTime(lineData.start));
+                const calcedTime = Math.max(0, parseTime(lineData.start) - getOffset());
+                wavesurfer.setTime(calcedTime);
                 wavesurfer.play();
             }
         }
@@ -330,7 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const word = lineData.words.find(w => w.id === wordCardClick.dataset.id);
             const timeStr = word.time.trim() === '' ? lineData.start : word.time;
             if (wavesurfer.getDuration() > 0) {
-                wavesurfer.setTime(parseTime(timeStr));
+                const calcedTime = Math.max(0, parseTime(timeStr) - getOffset());
+                wavesurfer.setTime(calcedTime);
                 wavesurfer.play();
             }
         }
@@ -409,6 +447,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseInt(match[1]) * 60 + parseInt(match[2]) + parseInt(match[3]) / 100;
     }
 
+    const getOffset = () => {
+        const offsetMs = parseInt(document.getElementById('offset').value) || 0;
+        return offsetMs / 1000;
+    }
+
     let animFrameId = null;
     let lastActiveLineId = null;
     wavesurfer.on('timeupdate', (currentTime) => {
@@ -417,10 +460,12 @@ document.addEventListener('DOMContentLoaded', () => {
             animFrameId = null;
             currTime.textContent = formatTime(currentTime);
 
+            const calcedTime = currentTime + getOffset();
+
             const activeIndex = lineArray.findIndex(l => {
                 const start = parseTime(l.start);
                 const end = parseTime(l.end) || wavesurfer.getDuration();
-                return currentTime >= start && currentTime <= end;
+                return calcedTime >= start && calcedTime <= end;
             });
 
             const activeLine = activeIndex !== -1 ? lineArray[activeIndex] : null;
@@ -448,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let index = activeLine.words.length-1; index >= 0; index--) {
                 if (activeLine.words[index].time.trim() !== '') {
                     const ws = parseTime(activeLine.words[index].time);
-                    if (currentTime >= ws) {activeTime = ws; break;}
+                    if (calcedTime >= ws) {activeTime = ws; break;}
                 }
             }
 
@@ -575,11 +620,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('trackTitle').value.trim();
         const artist = document.getElementById('trackArtist').value.trim();
         const album = document.getElementById('trackAlbum').value.trim();
+        const by = document.getElementById('author').value.trim();
+        const offset = document.getElementById('offset').value.trim();
 
         let elrc = '';
         if (title) elrc += `[ti:${title}]\n`;
         if (artist) elrc += `[ar:${artist}]\n`;
         if (album) elrc += `[al:${album}]\n`;
+        if (by) elrc += `[by:${by}]\n`;
+        if (offset) elrc += `[offset:${offset}]\n`;
+        const length = formatTime(wavesurfer.getDuration());
+        elrc += `[length:${length}]\n[re:synced+ (https://github.com/mono-o-o/synced-plus)]\n[ve:v1.0.2]\n\n`;
 
         lineArray.forEach((l, i) => {
             if (l.words.length > 0) {
@@ -682,14 +733,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isThemeMenuOpen = false;
     let isExportMenuOpen = false;
+    let isMetaMenuOpen = false;
 
     const exportOverlay = document.querySelector('.export-overlay');
-    const exportIconHTML = `<path style="fill: var(--accent-primary)" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z">`
+    const metaOverlay = document.querySelector('.meta-overlay');
+    const exportIconHTML = `<path style="fill: var(--accent-primary)" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z"/>`;
+    const metaIconHTML = `<path style="fill: var(--accent-primary)" d="M11 17h2v-6h-2zm1.713-8.287Q13 8.425 13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9t.713-.288M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />`;
 
     const toggleThemeMenu = (s) => {
         isThemeMenuOpen = s !== undefined ? s : !isThemeMenuOpen;
         if (isThemeMenuOpen) {
             if (isExportMenuOpen) toggleExportMenu(false);
+            if (isMetaMenuOpen) toggleMetaMenu(false);
             themeOverlay.classList.add('is-active');
             previewHeaderText.textContent = 'Theme Selection';
             previewHeaderIcon.innerHTML = paletteIconHTML;
@@ -698,13 +753,14 @@ document.addEventListener('DOMContentLoaded', () => {
             previewHeaderText.textContent = originalHeaderText;
             previewHeaderIcon.innerHTML = originalHeaderIcon;
         }
-        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen) ? 'none' : '';
+        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
     }
 
     const toggleExportMenu = (s) => {
         isExportMenuOpen = s !== undefined ? s : !isExportMenuOpen;
         if (isExportMenuOpen) {
             if (isThemeMenuOpen) toggleThemeMenu(false);
+            if (isMetaMenuOpen) toggleMetaMenu(false);
             exportOverlay.classList.add('is-active');
             previewHeaderText.textContent = 'Export Options';
             previewHeaderIcon.innerHTML = exportIconHTML;
@@ -713,10 +769,27 @@ document.addEventListener('DOMContentLoaded', () => {
             previewHeaderText.textContent = originalHeaderText;
             previewHeaderIcon.innerHTML = originalHeaderIcon;
         }
-        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen) ? 'none' : '';
+        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
+    }
+
+    const toggleMetaMenu = (s) => {
+        isMetaMenuOpen = s !== undefined ? s : !isMetaMenuOpen;
+        if (isMetaMenuOpen) {
+            if (isThemeMenuOpen) toggleThemeMenu(false);
+            if (isExportMenuOpen) toggleExportMenu(false);
+            metaOverlay.classList.add('is-active');
+            previewHeaderText.textContent = 'Metadata';
+            previewHeaderIcon.innerHTML = metaIconHTML;
+        } else {
+            metaOverlay.classList.remove('is-active');
+            previewHeaderText.textContent = originalHeaderText;
+            previewHeaderIcon.innerHTML = originalHeaderIcon;
+        }
+        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
     }
 
     document.getElementById('exportELRC').addEventListener('click', () => toggleExportMenu());
+    document.getElementById('metaBtn').addEventListener('click', () => toggleMetaMenu());
 
     const exportHandler = (type) => {
         const data = generateELRC(false, type);
@@ -781,6 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleInput = document.getElementById('trackTitle');
         const artistInput = document.getElementById('trackArtist');
         const albumInput = document.getElementById('trackAlbum');
+        const byInput = document.getElementById('author');
+        const offsetInput = document.getElementById('offset');
 
         lineArray = [];
 
@@ -804,6 +879,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
                     if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
                     if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'by') byInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'offset') offsetInput.value = metaMatch[2];
                     titleInput.dispatchEvent(new Event('input', {bubbles:true}));
                     return;
                 }
@@ -865,13 +942,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const preview = document.querySelector('.preview');
         const themeOverlay = document.querySelector('.theme-overlay');
         const exportOverlay = document.querySelector('.export-overlay');
+        const metaOverlay = document.querySelector('.meta-overlay');
         const placeholders = {
             btnWrapper: document.createComment('btnWrapper'),
             trackInfo: document.createComment('trackInfo'),
             previewHeader: document.createComment('previewHeader'),
             preview: document.createComment('preview'),
             themeOverlay: document.createComment('themeOverlay'),
-            exportOverlay: document.createComment('exportOverlay')
+            exportOverlay: document.createComment('exportOverlay'),
+            metaOverlay: document.createComment('metaOverlay')
         }
 
         btnWrapper.after(placeholders.btnWrapper);
@@ -880,6 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
         preview.after(placeholders.preview);
         themeOverlay.after(placeholders.themeOverlay);
         exportOverlay.after(placeholders.exportOverlay);
+        metaOverlay.after(placeholders.metaOverlay);
 
         const mobileHandler = (e) => {
             if (e.matches) {
@@ -889,6 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sidebar.appendChild(preview);
                 sidebar.appendChild(themeOverlay);
                 sidebar.appendChild(exportOverlay);
+                sidebar.appendChild(metaOverlay);
             } else {
                 placeholders.btnWrapper.before(btnWrapper);
                 placeholders.trackInfo.before(trackInfo);
@@ -896,6 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 placeholders.preview.before(preview);
                 placeholders.themeOverlay.before(themeOverlay);
                 placeholders.exportOverlay.before(exportOverlay);
+                placeholders.metaOverlay.before(metaOverlay);
                 document.body.classList.remove('menu-open');
             }
         }
