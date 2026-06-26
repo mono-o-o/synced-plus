@@ -7,7 +7,7 @@ This document contains legal notices, copyright disclosures, and licensing decla
 ## 1. Libraries
 
 ### wavesurfer.js
-* Usages: Waveform generation, timeline zooming, waveform hover label, playback hooks (i.e. playback controls and fetching current time), regions, spectrogram
+* Usages: Waveform generation, timeline zooming, waveform hover label, playback hooks (i.e. playback controls and fetching current time), regions
 * License: BSD 3-Clause License
 * Copyright Notice: Copyright (c) 2012-2023, katspaugh and contributors. All rights reserved.
 

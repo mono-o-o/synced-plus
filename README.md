@@ -27,7 +27,7 @@ Works completely within your system, does not send any data into a server.
 
 ### <strong>Interactive Waveform</strong>
 
-Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping. Includes playback buttons, too, obviously.
+Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
 
 ### <strong>Smart File Import</strong>
 

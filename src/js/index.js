@@ -50,6 +50,37 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     });
 
+    let undoStack = [];
+    let redoStack = [];
+    const maxHistory = 20;
+
+    const saveProgress = () => {
+        const progress = JSON.stringify(lineArray);
+        if (undoStack.length > 0 && undoStack[undoStack.length - 1] === progress) return;
+
+        undoStack.push(progress);
+        if (undoStack.length > maxHistory) undoStack.shift();
+        redoStack = [];
+        localStorage.setItem('draft', progress);
+    }
+
+    const undo = () => {
+        if (undoStack.length <= 1) return;
+        redoStack.push(undoStack.pop());
+        lineArray = JSON.parse(undoStack[undoStack.length - 1]);
+        renderWorkspace();
+        updatePreview();
+    }
+
+    const redo = () => {
+        if (redoStack.length === 0) return;
+        const state = redoStack.pop();
+        undoStack.push(state);
+        lineArray = JSON.parse(state);
+        renderWorkspace();
+        updatePreview();
+    }
+
     let lineArray = [];
     const createNewLine = (defaultTime = "00:00.00") => {
         return {
@@ -87,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lineData.start = formatTime(r.start);
             lineData.end = formatTime(r.end);
             renderWorkspace();
+            saveProgress();
         }
     })
 
@@ -298,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = e.target.closest('.line-card');
             lineArray.find(l => l.id === card.dataset.id).isEditing = false;
             renderWorkspace();
+            saveProgress();
         }
 
         if (e.target.classList.contains('time-input')) {
@@ -331,18 +364,21 @@ document.addEventListener('DOMContentLoaded', () => {
             lineData.start = formatTime(wavesurfer.getCurrentTime());
             validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
             renderWorkspace();
+            saveProgress();
         }
 
         if (e.target.closest('.get-end-btn')) {
             lineData.end = formatTime(wavesurfer.getCurrentTime());
             validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
             renderWorkspace();
+            saveProgress();
         }
 
         if (e.target.closest('.delete-btn')) {
             if (confirm("Are you sure you want to delete this line?")) {
                 lineArray = lineArray.filter(l => l.id !== card.dataset.id);
                 renderWorkspace();
+                saveProgress();
             }
         }
 
@@ -360,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
             word.time = formatTime(wavesurfer.getCurrentTime());
             validateTimes(lineArray.findIndex(l => l.id === card.dataset.id));
             renderWorkspace();
+            saveProgress();
             return;
         }
 
@@ -439,6 +476,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     formatTimeCallback: (seconds) => formatTime(seconds)
                 })
             )
+        }
+
+        const savedDraft = localStorage.getItem('draft');
+        if (savedDraft && lineArray.length === 0) {
+            if (confirm("You have a draft saved. Load it?")) {
+                try {
+                    lineArray = JSON.parse(savedDraft);
+                    undoStack = [savedDraft];
+                    redoStack = [];
+                    renderWorkspace();
+                    updatePreview();
+                } catch (err) {
+                    console.error('Error loading draft:', err);
+                }
+            } else {
+                localStorage.removeItem('draft');
+            }
         }
     });
 
@@ -558,6 +612,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('playPauseBtn').click();
         } else if (e.code === 'ArrowLeft') document.getElementById('rewindBtn').click();
         else if (e.code === 'ArrowRight') document.getElementById('fastForwardBtn').click();
+
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            undo();
+        } else if (e.ctrlKey && e.shiftKey && e.key === 'Z' || (e.ctrlKey && e.key === 'y')) {
+            e.preventDefault();
+            redo();
+        }
     });
 
     const updSliderFill = (el, val) => {
@@ -613,6 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         lineArray.push(createNewLine(defaultTime));
         renderWorkspace();
+        saveProgress();
     });
 
     const previewContainer = document.querySelector('.preview')
