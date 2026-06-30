@@ -20,9 +20,9 @@
 </head>
 <body>
 <header>
-    <a href="https://github.com/mono-o-o/synced-plus" target="_blank" style="text-decoration: none" title="Click to visit the GitHub repository!">
-        <h1 class="title">synced<span class="accent">+</span></h1>
-    </a>
+    <button class="modal-btn" commandFor="aboutModal" command="show-modal">
+        <h1 class="title" id="aboutBtn" title="Help & About">synced<span class="accent">+</span></h1>
+    </button>
     <div>
         <div class="header-btn-wrapper">
             <button type="button" id="themeSwitch" title="Switch theme">
@@ -159,6 +159,93 @@
 </div>
 
 <div class="preview"></div>
+<dialog id="aboutModal" class="about-modal">
+    <div class="about-tabs">
+        <button class="about-tab active" data-target="about-instructions">How to Use</button>
+        <button class="about-tab" data-target="about-hotkeys">Hotkeys</button>
+        <button class="about-tab" data-target="about-credits">About</button>
+    </div>
+    <div class="about-content-wrapper">
+        <div id="about-instructions" class="about-content active">
+            <h3>How to Use</h3>
+            <p>1. <strong class="accent">Load Audio</strong>: Click on the <strong>Open Audio</strong> button to load a track. Metadata input fields will automatically be filled if your audio files have them.</p>
+            <p>2. <strong class="accent">Load Lyrics / Add Lines</strong>: Click on the <strong>Open LRC/TXT</strong> button to load an existing ELRC/LRC or TXT file.<br><br>In the case of importing a TXT file, synced+ will read per line and add a lyric line card in the main workspace for each. Alternatively, you can opt not to import a text/lrc file and manually add lyric lines yourself.</p>
+            <p>3. <strong class="accent">Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time.<br><br>To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.<br><br>Line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation.</p>
+            <p>4. <strong class="accent">Export</strong>: Click on the <strong>Export</strong> button to choose your preferred format and download your .lrc file.</p>
+        </div>
+        <div id="about-hotkeys" class="about-content">
+            <h3>Hotkeys</h3>
+            <table>
+                <tr>
+                    <td>Space</td>
+                    <td>Play/Pause</td>
+                </tr>
+                <tr>
+                    <td>Left/Right Arrow</td>
+                    <td>Jump 1 second forward/backward</td>
+                </tr>
+                <tr>
+                    <td>Ctrl + Z</td>
+                    <td>Undo</td>
+                </tr>
+                <tr>
+                    <td>Ctrl + Shift + Z<br>Ctrl + Y</td>
+                    <td>Redo</td>
+                </tr>
+                <tr>
+                    <td>&lt;</td>
+                    <td>Slow Down +0.25x</td>
+                </tr>
+                <tr>
+                    <td>&gt;</td>
+                    <td>Speed Up +0.25x</td>
+                </tr>
+            </table>
+        </div>
+        <div id="about-credits" class="about-content">
+            <div class="credits-line">
+                <h3>Privacy Notice</h3>
+                <p>All processing is done locally. No audio or text gets sent to a server.</p>
+            </div>
+            <div class="credits-line">
+                <h3>Changes since <code>v1.0.1</code></h3>
+                <ul>
+                    <li>Implemented wavesurfer regions plugin</li>
+                    <li>Added undo/redo and lyric draft saving</li>
+                    <li>Added back [offset:] field (functional this time)</li>
+                    <li>Fix RangeError</li>
+                    <li>Replaced native alert and confirm dialogues with custom ones</li>
+                    <li>Added this Help & About modal</li>
+                    <li>JS code clean-up</li>
+                    <li>Added transition when changing themes</li>
+                </ul>
+            </div>
+            <div class="credits-line">
+                <h3>Credits</h3>
+                <a href="https://wavesurfer.xyz" target="_blank" rel="noopener noreferrer">wavesurfer.js</a>
+                <a href="https://github.com/aadsm/jsmediatags" target="_blank" rel="noopener noreferrer">jsmediatags</a>
+                <a href="https://www.joshwcomeau.com/css/custom-css-reset/" target="_blank" rel="noopener noreferrer">CSS Reset</a>
+            </div>
+            <div class="about-credits-row">
+                <h3>synced+ <code>v1.1.0</code></h3>
+                <a href="https://github.com/mono-o-o/synced-plus" target="_blank" rel="noopener noreferrer" title="GitHub Repo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2" />
+                    </svg>
+                </a>
+                <button class="copy-btn" onClick="copyToClipboard(this, '.mono_o'); return false;" title="Copy mono's Discord Username">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.1.1 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.1 16.1 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02M8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12m6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12" />
+                    </svg>
+                    <span class="copied-text">copied!</span>
+                </button>
+            </div>
+            <div class="credits-line">
+                <p>made with <3 by mono</p>
+            </div>
+        </div>
+    </div>
+</dialog>
 <div class="theme-overlay"></div>
 <div class="export-overlay">
     <div class="export-card" id="exportStandard">
@@ -190,6 +277,20 @@
         <input type="number" id="offset" value="0" title="[offset:]">
     </div>
 </div>
+
+<dialog id="alertDialogue" class="custom-dialog">
+    <p id="alertMsg"></p>
+    <div class="dialog-buttons">
+        <button id="alertOkBtn" class="primary-btn">OK</button>
+    </div>
+</dialog>
+<dialog id="confirmDialogue" class="custom-dialog">
+    <p id="confirmMsg"></p>
+    <div class="dialog-buttons">
+        <button id="confirmNoBtn" class="secondary-btn">No</button>
+        <button id="confirmYesBtn" class="primary-btn">Yes</button>
+    </div>
+</dialog>
 <script src="js/index.js"></script>
 </body>
 </html>

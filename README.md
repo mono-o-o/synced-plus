@@ -1,6 +1,10 @@
+<div align="center">
+
 # <img src="src/img/synced-plus-logo-full.png" style="height: 3rem"></img>
 
-A minimal, completely local, cross-platform, and browser compatible Enhanced LRC creator. Simply import your audio and optional LRC/TXT, and start syncing lyrics line-by-line and/or word-by-word.
+A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC creator. Simply import your audio and optional LRC/TXT and start syncing lyrics line-by-line and/or word-by-word.
+
+<br>
 
 ## Screenshots
 
@@ -15,35 +19,34 @@ A minimal, completely local, cross-platform, and browser compatible Enhanced LRC
   </tr>
 </table>
 
+</div>
+
+<br>
+
 ## Features
 
-### <strong>Specifically for ELRC</strong>
+- ### <strong>Specifically for ELRC</strong>
+  Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
 
-Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
+- ### <strong>Completely Offline</strong>
+  Works completely within your system, does not send any data into a server.
 
-### <strong>Completely Offline</strong>
+- ### <strong>Interactive Waveform</strong>
+  Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
 
-Works completely within your system, does not send any data into a server.
+- ### <strong>Smart File Import</strong>
+  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
 
-### <strong>Interactive Waveform</strong>
+- ### <strong>Smart Time Field Setting</strong>
+  Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
 
-Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
+- ### <strong>Live Preview</strong>
+  Watch your ELRC file compile in realtime in a preview sidebar.
 
-### <strong>Smart File Import</strong>
+- ### <strong>Themes !!!!</strong>
+  Choose from a selection of colour palettes that I totally do not use in my IDEs.
 
-Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
-
-### <strong>Smart Time Field Setting</strong>
-
-Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
-
-### <strong>Live Preview</strong>
-
-Watch your ELRC file compile in realtime in a preview sidebar.
-
-### <strong>Themes !!!!</strong>
-
-Choose from a selection of colour palettes that I totally do not use in my IDEs.
+<br>
 
 ## How to Use
 
@@ -54,20 +57,58 @@ Choose from a selection of colour palettes that I totally do not use in my IDEs.
 
    Alternatively, you can opt not to import a text/lrc file and manually add lyric lines yourself.
 
-3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.
+3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.
 
    Line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation.
 
-4. <strong>Export</strong>: Click on the <strong>Export</strong> button to download your fully formatted .lrc file.
+4. <strong>Export</strong>: Click on the <strong>Export</strong> button to choose your preferred format and download your .lrc file.
+
+<br>
+
+<table align="center">
+   <thead>
+       <tr><th colspan="2"><strong>Hotkeys</strong></th></tr>
+   </thead>
+   <tbody>
+       <tr>
+          <td><strong>Space</strong></td>
+          <td>Play/Pause</td>
+       </tr>
+       <tr>
+          <td><strong>Left/Right Arrow</strong></td>
+          <td>Jump 1 second forward/backward</td>
+       </tr>
+       <tr>
+          <td><strong>Ctrl + Z</strong></td>
+          <td>Undo</td>
+       </tr>
+       <tr>
+          <td><strong>Ctrl + Shift + Z / Ctrl + Y</strong></td>
+          <td>Redo</td>
+       </tr>
+       <tr>
+          <td><strong>&lt;</strong></td>
+          <td>Slow Down +0.25x</td>
+       </tr>
+       <tr>
+          <td><strong>&gt;</strong></td>
+          <td>Speed Up +0.25x</td>
+       </tr>
+   </tbody>
+</table>
+
+<br>
 
 ## Built With
 
 synced+ is written in vanilla HTML/CSS/JS, but it does use two crucial libraries:
 
-* <a href="https://wavesurfer.xyz">wavesurfer.js</a> - Waveform rendering, playback controls, current playback time fetching.
-* <a href="https://github.com/aadsm/jsmediatags">jsmediatags</a> - Reading and writing of audio metadata tags for files supported by the library.
+* <a href="https://wavesurfer.xyz">wavesurfer.js</a> – Waveform rendering, playback controls, current playback time fetching.
+* <a href="https://github.com/aadsm/jsmediatags">jsmediatags</a> – Reading and writing of audio metadata tags for files supported by the library.
 
 Additionally, it uses <a href="https://v2.tauri.app">Tauri</a> to work as a desktop application.
+
+<br>
 
 ## License
 

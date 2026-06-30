@@ -181,7 +181,6 @@ header button {
     color: var(--accent-primary);
     transition: box-shadow var(--transition-fast);
     padding: var(--space-2);
-    display: flex;
     cursor: pointer;
     border-radius: 0.1rem;
 }
@@ -299,7 +298,7 @@ header button {
     align-items: center;
     gap: var(--space-4);
     flex: 1;
-    mid-width: 12rem;
+    min-width: 12rem;
 }
 
 .info-field label {
@@ -901,6 +900,209 @@ header button {
     font-size: var(--text-sm);
     padding: var(--space-4);
 }
+
+.modal-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+dialog.about-modal {
+    border: 1px solid var(--accent-muted);
+    background-color: var(--accent-srf);
+    padding: var(--space-6);
+    border-radius: 0.25rem;
+    color: var(--accent-txt);
+    max-width: 540px;
+    width: 90%;
+    max-height: 80vh;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    margin: auto;
+    outline: none;
+}
+
+dialog.about-modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.about-tabs {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.about-tab {
+    background: none;
+    border: none;
+    color: var(--accent-muted);
+    cursor: pointer;
+    font-weight: 500;
+    padding: var(--space-2) var(--space-4);
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+    border-bottom: 2px solid transparent;
+}
+
+.about-tab:hover {color: var(--accent-txt);}
+
+.about-tab.active {
+    color: var(--accent-primary);
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+.about-content-wrapper {
+    overflow-y: auto;
+    max-height: calc(80vh - 120px);
+    scrollbar-color: var(--accent-secondary) var(--accent-bg);
+}
+
+.about-content {
+    display: none;
+    color: var(--accent-txt);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    padding: var(--space-6) var(--space-4);
+}
+
+.about-content.active {display: block;}
+.about-content p:not(:last-child) {margin-bottom: var(--space-4);}
+
+.about-content h3 {
+    color: var(--accent-primary);
+    margin-bottom: var(--space-2);
+    margin-top: var(--space-4);
+    font-size: var(--text-xl);
+}
+
+.about-content h3:first-child {margin-top: 0;}
+
+.about-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-2);
+}
+
+.about-content td {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--accent-muted);
+}
+
+.about-content td:first-child {
+    color: var(--accent-primary);
+    font-family: 'Fira Code', monospace;
+    width: 45%;
+}
+
+.about-credits-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.about-credits-row h3 {margin-bottom:0; margin-top: var(--space-4);}
+
+.about-credits-row a, .copy-btn {
+    color: var(--accent-muted);
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-xl);
+    padding: 0;
+}
+
+.about-credits-row a:hover, .copy-btn:hover {
+    color: var(--accent-primary);
+}
+
+.copy-btn {position: relative;}
+
+.copied-text {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translate(-5px, -50%);
+    background: var(--accent-txt);
+    color: var(--accent-bg);
+    font-size: var(--text-xs);
+    padding: var(--space-1);
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.copied-text.show-copied {
+    opacity: 1;
+    transform: translate(10px, -50%);
+}
+
+.credits-line:not(:last-of-type) {margin-bottom: var(--space-4);}
+
+.credits-line a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    display: inline-block;
+    margin-right: var(--space-2);
+}
+
+.credits-line a:hover {text-decoration: underline;}
+.credits-line ul {padding-left: var(--space-4);}
+
+dialog.custom-dialog {
+    border: 1px solid var(--accent-muted);
+    background-color: var(--accent-srf);
+    padding: var(--space-6);
+    border-radius: 0.25rem;
+    color: var(--accent-txt);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    margin: auto;
+    outline: none;
+}
+
+dialog.custom-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+dialog.custom-dialog p {
+    margin-bottom: var(--space-6);
+    line-height: 1.5;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+}
+
+.dialog-buttons button {
+    padding: var(--space-2) var(--space-4);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-weight: 500;
+    border: none;
+    font-size: var(--text-sm);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.primary-btn {
+    background-color: var(--accent-primary);
+    color: var(--accent-bg);
+}
+
+.primary-btn:hover {background-color: var(--accent-txt);}
+
+.secondary-btn {
+    background-color: transparent;
+    color: var(--accent-txt);
+    transition: color var(--transition-fast);
+}
+
+.secondary-btn:hover {color: var(--accent-primary);}
 
 /* responsiveness yay ! */
 

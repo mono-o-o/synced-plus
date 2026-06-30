@@ -25,6 +25,43 @@ document.addEventListener('DOMContentLoaded', () => {
     currTime.textContent = formatTime(0);
     duration.textContent = formatTime(0);
 
+    const customAlert = (msg) => {
+        return new Promise((resolve) => {
+            const dialogue = document.getElementById('alertDialogue');
+            document.getElementById('alertMsg').textContent = msg;
+            const okBtn = document.getElementById('alertOkBtn');
+            const closeAlert = () => {
+                dialogue.close();
+                okBtn.removeEventListener('click', closeAlert);
+                resolve();
+            }
+            okBtn.addEventListener('click', closeAlert);
+            dialogue.showModal();
+        })
+    }
+
+    const customConfirm = (msg) => {
+        return new Promise((resolve) => {
+            const dialogue = document.getElementById('confirmDialogue');
+            document.getElementById('confirmMsg').textContent = msg;
+            const yesBtn = document.getElementById('confirmYesBtn');
+            const noBtn = document.getElementById('confirmNoBtn');
+            const closeConfirm = () => {
+                dialogue.close();
+                yesBtn.removeEventListener('click', yes);
+                noBtn.removeEventListener('click', no);
+            }
+
+            const yes = () => {closeConfirm(); resolve(true);}
+            const no = () => {closeConfirm(); resolve(false);}
+
+            yesBtn.addEventListener('click', yes);
+            noBtn.addEventListener('click', no);
+            dialogue.showModal();
+        })
+    }
+
+    let wsRegions;
     const wavesurfer = WaveSurfer.create({
         container: '#waveform',
         waveColor: accentSecondary,
@@ -49,6 +86,32 @@ document.addEventListener('DOMContentLoaded', () => {
             wsRegions = WaveSurfer.Regions.create()
         ]
     });
+
+    document.querySelectorAll('.about-tab').forEach(t => {
+        t.addEventListener('click', (e) => {
+            document.querySelectorAll('.about-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.about-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(e.target.dataset.target).classList.add('active');
+        })
+    })
+
+    const aboutModal = document.getElementById('aboutModal');
+    if (aboutModal) {
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) {
+                const rect = e.target.getBoundingClientRect();
+                if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) aboutModal.close();
+            }
+        })
+    }
+
+    window.copyToClipboard = function(btn, text) {
+        navigator.clipboard.writeText(text);
+        const copyNotif = btn.querySelector('.copied-text');
+        copyNotif.classList.add('show-copied');
+        setTimeout(() => copyNotif.classList.remove('show-copied'), 1000);
+    }
 
     let undoStack = [];
     let redoStack = [];
@@ -100,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const startSec = parseTime(l.start);
             const endSec = parseTime(l.end);
             if (endSec > startSec) {
-                wsRegions.addRegion({
+                const region = wsRegions.addRegion({
                     id: l.id,
                     start: startSec,
                     end: endSec,
@@ -108,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     drag: false,
                     resize: true
                 })
+                region.element.title = l.text;
             }
         })
     }
@@ -343,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })
 
-    linesContainer.addEventListener('mousedown', (e) => {
+    linesContainer.addEventListener('mousedown', async (e) => {
         const card = e.target.closest('.line-card');
         if (!card) return;
         const lineData = lineArray.find(l => l.id === card.dataset.id);
@@ -375,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (e.target.closest('.delete-btn')) {
-            if (confirm("Are you sure you want to delete this line?")) {
+            if (await customConfirm("Are you sure you want to delete this line?")) {
                 lineArray = lineArray.filter(l => l.id !== card.dataset.id);
                 renderWorkspace();
                 saveProgress();
@@ -412,16 +476,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })
 
+    let skipAudioConfirm = false;
     const audioFile = document.getElementById('audioFile');
-    audioFile.addEventListener('click', (e) => {
-        const existingLines = document.querySelectorAll('.line-card');
-        if (existingLines.length > 0) {
-            if (confirm("Workspace is not empty. Load a new audio file?")) {
+    audioFile.addEventListener('click', async (e) => {
+        if (skipAudioConfirm) {skipAudioConfirm = false; return;}
+        if (lineArray.length > 0) {
+            e.preventDefault();
+            const proceed = await customConfirm("Workspace is not empty. Load a new audio file?");
+            if (proceed) {
                 lineArray = [];
                 renderWorkspace();
                 if (wavesurfer.getDuration() > 0) wavesurfer.setTime(0);
                 document.dispatchEvent(new Event('input', {bubbles:true}));
-            } else e.preventDefault();
+                undoStack = [];
+                redoStack = [];
+                localStorage.removeItem('draft');
+                skipAudioConfirm = true;
+                audioFile.click();
+            }
         }
     })
 
@@ -457,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
     importLRC.title = "Please open an audio file first!";
     lrcFile.disabled = true;
     let hoverPlugin;
-    wavesurfer.on('ready', () => {
+    wavesurfer.on('ready', async () => {
         duration.textContent = formatTime(wavesurfer.getDuration());
         currTime.textContent = formatTime(0);
         addLineBtn.disabled = false;
@@ -480,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const savedDraft = localStorage.getItem('draft');
         if (savedDraft && lineArray.length === 0) {
-            if (confirm("You have a draft saved. Load it?")) {
+            if (await customConfirm("You have a draft saved. Load it?")) {
                 try {
                     lineArray = JSON.parse(savedDraft);
                     undoStack = [savedDraft];
@@ -610,16 +682,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.code === 'Space') {
             e.preventDefault();
             document.getElementById('playPauseBtn').click();
-        } else if (e.code === 'ArrowLeft') document.getElementById('rewindBtn').click();
-        else if (e.code === 'ArrowRight') document.getElementById('fastForwardBtn').click();
+        }
 
-        if (e.ctrlKey && e.key === 'z') {
-            e.preventDefault();
-            undo();
-        } else if (e.ctrlKey && e.shiftKey && e.key === 'Z' || (e.ctrlKey && e.key === 'y')) {
+        if (e.code === 'ArrowLeft') document.getElementById('rewindBtn').click();
+        if (e.code === 'ArrowRight') document.getElementById('fastForwardBtn').click();
+
+        if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') || (e.ctrlKey && e.key.toLowerCase() === 'y')) {
             e.preventDefault();
             redo();
+        } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            undo();
         }
+
+        if (e.key === '<') document.getElementById('slowDownBtn').click();
+        if (e.key === '>') document.getElementById('speedUpBtn').click();
     });
 
     const updSliderFill = (el, val) => {
@@ -694,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (by) elrc += `[by:${by}]\n`;
         if (offset) elrc += `[offset:${offset}]\n`;
         const length = formatTime(wavesurfer.getDuration());
-        elrc += `[length:${length}]\n[re:synced+ (https://github.com/mono-o-o/synced-plus)]\n[ve:v1.0.2]\n\n`;
+        elrc += `[length:${length}]\n[re:synced+ (https://github.com/mono-o-o/synced-plus)]\n[ve:v1.1.0]\n\n`;
 
         lineArray.forEach((l, i) => {
             if (l.words.length > 0) {
@@ -724,9 +801,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updatePreview = () => previewContainer.innerHTML = generateELRC(true);
 
-    document.addEventListener('input', updatePreview);
-    document.addEventListener('click', updatePreview);
-    document.addEventListener('focusout', updatePreview);
+    document.addEventListener('input', (e) => {
+        if (e.target.closest('#lines') || e.target.closest('.track-info')) updatePreview();
+    })
 
     const saveFile = async (lyricData, filename) => {
         if (window.__TAURI_INTERNALS__) {
@@ -774,88 +851,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalHeaderText = previewHeaderText.textContent;
     const originalHeaderIcon = previewHeaderIcon.innerHTML;
 
-    const paletteIconHTML = `<path style="fill: var(--accent-primary)" d="M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20"/>`;
-
     const applyTheme = (theme) => {
-        const root = document.documentElement;
-        for (const [prop,value] of Object.entries(theme.colors)) root.style.setProperty(prop,value);
+        const update = () => {
+            Object.entries(theme.colors).forEach(([prop, val]) => document.documentElement.style.setProperty(prop, val))
+            const root = document.documentElement;
+            wavesurfer.setOptions({
+                waveColor: getComputedStyle(root).getPropertyValue('--accent-secondary'),
+                progressColor: getComputedStyle(root).getPropertyValue('--accent-primary'),
+                backgroundColor: getComputedStyle(root).getPropertyValue('--accent-srf'),
+                cursorColor: getComputedStyle(root).getPropertyValue('--accent-txt')
+            });
+            localStorage.setItem('theme', theme.id);
+        }
 
-        const newPrimary = getComputedStyle(root).getPropertyValue('--accent-primary');
-        const newSecondary = getComputedStyle(root).getPropertyValue('--accent-secondary');
-        const newSrf = getComputedStyle(root).getPropertyValue('--accent-srf');
-        const newText = getComputedStyle(root).getPropertyValue('--accent-txt');
-
-        wavesurfer.setOptions({
-            waveColor: newSecondary,
-            progressColor: newPrimary,
-            backgroundColor: newSrf,
-            cursorColor: newText
-        });
-
-        localStorage.setItem('theme', theme.id);
+        if (document.startViewTransition) document.startViewTransition(update);
+        else update();
     }
 
-    let isThemeMenuOpen = false;
-    let isExportMenuOpen = false;
-    let isMetaMenuOpen = false;
+    const getIcon = (el) => {
+        const path = document.querySelector(el).querySelector('path').cloneNode();
+        path.removeAttribute('fill');
+        path.style.fill = 'var(--accent-primary)';
+        return path.outerHTML;
+    }
 
-    const exportOverlay = document.querySelector('.export-overlay');
-    const metaOverlay = document.querySelector('.meta-overlay');
-    const exportIconHTML = `<path style="fill: var(--accent-primary)" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z"/>`;
-    const metaIconHTML = `<path style="fill: var(--accent-primary)" d="M11 17h2v-6h-2zm1.713-8.287Q13 8.425 13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9t.713-.288M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />`;
+    const panels = {
+        theme: {
+            el: themeOverlay,
+            title: 'Theme Selection',
+            icon: getIcon('#themeSwitch')
+        },
+        export: {
+            el: document.querySelector('.export-overlay'),
+            title: 'Export Options',
+            icon: getIcon('#exportELRC')
+        },
+        meta: {
+            el: document.querySelector('.meta-overlay'),
+            title: 'Metadata',
+            icon: getIcon('.track-info-header')
+        }
+    }
 
-    const toggleThemeMenu = (s) => {
-        isThemeMenuOpen = s !== undefined ? s : !isThemeMenuOpen;
-        if (isThemeMenuOpen) {
-            if (isExportMenuOpen) toggleExportMenu(false);
-            if (isMetaMenuOpen) toggleMetaMenu(false);
-            themeOverlay.classList.add('is-active');
-            previewHeaderText.textContent = 'Theme Selection';
-            previewHeaderIcon.innerHTML = paletteIconHTML;
-        } else {
-            themeOverlay.classList.remove('is-active');
+    let activePanel = null;
+
+    const togglePanel = (p) => {
+        Object.values(panels).forEach(p => p.el.classList.remove('is-active'));
+        if (activePanel === p || !p) {
+            activePanel = null;
             previewHeaderText.textContent = originalHeaderText;
             previewHeaderIcon.innerHTML = originalHeaderIcon;
-        }
-        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
-    }
-
-    const toggleExportMenu = (s) => {
-        isExportMenuOpen = s !== undefined ? s : !isExportMenuOpen;
-        if (isExportMenuOpen) {
-            if (isThemeMenuOpen) toggleThemeMenu(false);
-            if (isMetaMenuOpen) toggleMetaMenu(false);
-            exportOverlay.classList.add('is-active');
-            previewHeaderText.textContent = 'Export Options';
-            previewHeaderIcon.innerHTML = exportIconHTML;
+            document.querySelector('.preview').style.display = '';
         } else {
-            exportOverlay.classList.remove('is-active');
-            previewHeaderText.textContent = originalHeaderText;
-            previewHeaderIcon.innerHTML = originalHeaderIcon;
+            activePanel = p;
+            const selectedPanel = panels[p];
+            selectedPanel.el.classList.add('is-active');
+            previewHeaderText.textContent = selectedPanel.title;
+            previewHeaderIcon.innerHTML = selectedPanel.icon;
+            document.querySelector('.preview').style.display = 'none';
         }
-        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
     }
 
-    const toggleMetaMenu = (s) => {
-        isMetaMenuOpen = s !== undefined ? s : !isMetaMenuOpen;
-        if (isMetaMenuOpen) {
-            if (isThemeMenuOpen) toggleThemeMenu(false);
-            if (isExportMenuOpen) toggleExportMenu(false);
-            metaOverlay.classList.add('is-active');
-            previewHeaderText.textContent = 'Metadata';
-            previewHeaderIcon.innerHTML = metaIconHTML;
-        } else {
-            metaOverlay.classList.remove('is-active');
-            previewHeaderText.textContent = originalHeaderText;
-            previewHeaderIcon.innerHTML = originalHeaderIcon;
-        }
-        document.querySelector('.preview').style.display = (isThemeMenuOpen || isExportMenuOpen || isMetaMenuOpen) ? 'none' : '';
-    }
+    document.getElementById('themeSwitch').addEventListener('click', () => togglePanel('theme'));
+    document.getElementById('exportELRC').addEventListener('click', () => togglePanel('export'));
+    document.getElementById('metaBtn').addEventListener('click', () => togglePanel('meta'));
 
-    document.getElementById('exportELRC').addEventListener('click', () => toggleExportMenu());
-    document.getElementById('metaBtn').addEventListener('click', () => toggleMetaMenu());
+    const exportHandler = async (type) => {
+        if (!loadedAudio) {await customAlert("Please load an audio file first!"); return;}
+        if (lineArray.length === 0) {await customAlert("Empty workspace. Add at least one lyric line first before exporting."); return;}
 
-    const exportHandler = (type) => {
         const data = generateELRC(false, type);
         if (!data) return;
         const audio = document.getElementById('audioFile');
@@ -866,8 +930,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (titleInput) title = titleInput;
         }
 
-        saveFile(data, title);
-        toggleExportMenu(false);
+        await saveFile(data, title);
+        togglePanel(null);
     }
 
     document.getElementById('exportStandard').addEventListener('click', () => exportHandler('standard'));
@@ -886,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 card.addEventListener('click', () => {
                     applyTheme(t);
-                    toggleThemeMenu(false);
+                    togglePanel(null);
                 });
                 themeOverlay.appendChild(card);
             });
@@ -897,8 +961,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
         .catch(err => console.error('Error fetching themes.jSON :sob: :', err));
-
-    themeSwitchBtn.addEventListener('click', () => toggleThemeMenu());
 
     const savedThemeId = localStorage.getItem('theme');
     if (savedThemeId) {
