@@ -478,49 +478,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let skipAudioConfirm = false;
     const audioFile = document.getElementById('audioFile');
-    audioFile.addEventListener('click', async (e) => {
-        if (skipAudioConfirm) {skipAudioConfirm = false; return;}
-        if (lineArray.length > 0) {
-            e.preventDefault();
-            const proceed = await customConfirm("Workspace is not empty. Load a new audio file?");
-            if (proceed) {
-                lineArray = [];
-                renderWorkspace();
-                if (wavesurfer.getDuration() > 0) wavesurfer.setTime(0);
-                document.dispatchEvent(new Event('input', {bubbles:true}));
-                undoStack = [];
-                redoStack = [];
-                localStorage.removeItem('draft');
-                skipAudioConfirm = true;
-                audioFile.click();
-            }
-        }
-    })
-
-    audioFile.addEventListener('change', (e) => {
+    audioFile.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            if (loadedAudio) URL.revokeObjectURL(loadedAudio);
+        if (!file) return;
 
-            const titleInput = document.getElementById('trackTitle');
-            const artistInput = document.getElementById('trackArtist');
-            const albumInput = document.getElementById('trackAlbum');
-
-            titleInput.value = ''; artistInput.value = ''; albumInput.value = '';
-            titleInput.dispatchEvent(new Event('input', {bubbles:true}));
-
-            loadedAudio = URL.createObjectURL(file);
-            wavesurfer.load(loadedAudio);
-            window.jsmediatags.read(file, {
-                onSuccess: function(tag) {
-                    const tags = tag.tags;
-                    if (tags.title) document.getElementById('trackTitle').value = tags.title;
-                    if (tags.artist) document.getElementById('trackArtist').value = tags.artist;
-                    if (tags.album) document.getElementById('trackAlbum').value = tags.album;
-                    document.getElementById('trackTitle').dispatchEvent(new Event('input', {bubbles:true}));
-                }, onError: function(err) {console.warn('Problem reading audio metadata: ', err.info);}
-            })
+        if (lineArray.length > 0) {
+            const proceed = await customConfirm("Workspace is not empty. Overwrite?");
+            if (!proceed) {e.target.value = ''; return;}
+            lineArray = [];
+            renderWorkspace();
+            if (wavesurfer.getDuration() > 0) wavesurfer.setTime(0);
+            document.dispatchEvent(new Event('input', {bubbles:true}));
+            undoStack = [];
+            redoStack = [];
+            localStorage.removeItem('draft');
         }
+
+        if (loadedAudio) URL.revokeObjectURL(loadedAudio);
+
+        const titleInput = document.getElementById('trackTitle');
+        const artistInput = document.getElementById('trackArtist');
+        const albumInput = document.getElementById('trackAlbum');
+
+        titleInput.value = ''; artistInput.value = ''; albumInput.value = '';
+        titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+
+        loadedAudio = URL.createObjectURL(file);
+        wavesurfer.load(loadedAudio);
+        window.jsmediatags.read(file, {
+            onSuccess: function(tag) {
+                const tags = tag.tags;
+                if (tags.title) document.getElementById('trackTitle').value = tags.title;
+                if (tags.artist) document.getElementById('trackArtist').value = tags.artist;
+                if (tags.album) document.getElementById('trackAlbum').value = tags.album;
+                document.getElementById('trackTitle').dispatchEvent(new Event('input', {bubbles:true}));
+            }, onError: function(err) {console.warn('Problem reading audio metadata: ', err.info);}
+        })
     });
 
     const importLRC = document.getElementById('importLRC');
