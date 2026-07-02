@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const customConfirm = (msg) => {
         return new Promise((resolve) => {
             const dialogue = document.getElementById('confirmDialogue');
-            document.getElementById('confirmMsg').textContent = msg;
+            document.getElementById('confirmMsg').innerHTML = msg;
             const yesBtn = document.getElementById('confirmYesBtn');
             const noBtn = document.getElementById('confirmNoBtn');
             const closeConfirm = () => {
@@ -123,8 +123,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         undoStack.push(progress);
         if (undoStack.length > maxHistory) undoStack.shift();
-        redoStack = [];
-        localStorage.setItem('draft', progress);
+
+        const audioInput = document.getElementById('audioFile');
+        const currentAudioName = audioInput && audioInput.files.length > 0 ? audioInput.files[0].name : '';
+
+        const draftData = {
+            audioName: currentAudioName,
+            lines: progress
+        }
+
+        localStorage.setItem('draft', JSON.stringify(draftData));
     }
 
     const undo = () => {
@@ -545,19 +553,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const savedDraft = localStorage.getItem('draft');
         if (savedDraft && lineArray.length === 0) {
-            if (await customConfirm("You have a draft saved. Load it?")) {
-                try {
-                    lineArray = JSON.parse(savedDraft);
-                    undoStack = [savedDraft];
-                    redoStack = [];
-                    renderWorkspace();
-                    updatePreview();
-                } catch (err) {
-                    console.error('Error loading draft:', err);
+            try {
+                const draftData = JSON.parse(savedDraft);
+                const audioInput = document.getElementById('audioFile');
+                const currentAudioName = audioInput && audioInput.files.length > 0 ? audioInput.files[0].name : '';
+                if (draftData.audioName && draftData.audioName === currentAudioName) {
+                    if (await customConfirm(`<p style="line-height: 2">You have a draft saved for: <br><code style="padding: var(--space-1); background-color: var(--accent-bg);">${draftData.audioName}</code><br>Load it?</p>`)) {
+                        lineArray = JSON.parse(draftData.lines);
+                        undoStack = [draftData.lines];
+                        redoStack = [];
+                        renderWorkspace();
+                        updatePreview();
+                    } else localStorage.removeItem('draft');
                 }
-            } else {
-                localStorage.removeItem('draft');
-            }
+            } catch (err) {console.error('Error loading draft: ', err);}
         }
     });
 
