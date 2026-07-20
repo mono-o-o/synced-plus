@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        platform: [macos-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -40,7 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'synced+ ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseName: '${{ github.ref_name }} for mac & linux'
+          releaseBody: 'pee'
           releaseDraft: true
           prerelease: false

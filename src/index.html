@@ -7,11 +7,11 @@
     <title>ELRC Creator | synced+</title>
     <link rel="icon" type="image/png" href="img/synced-plus-logo.png">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/vendor/wavesurfer.min.js"></script>
-    <script src="js/vendor/hover.min.js"></script>
-    <script src="js/vendor/zoom.min.js"></script>
-    <script src="js/vendor/regions.min.js"></script>
-    <script src="js/vendor/jsmediatags.min.js"></script>
+    <script src="js/vendor/wavesurfer.min.js" defer></script>
+    <script src="js/vendor/hover.min.js" defer></script>
+    <script src="js/vendor/zoom.min.js" defer></script>
+    <script src="js/vendor/regions.min.js" defer></script>
+    <script src="js/vendor/jsmediatags.min.js" defer></script>
     <meta name="description" content="A minimal, cross-platform, browser-compatible ELRC creator. Simply import your audio and create precisely timed, word-by-word synced lyrics.">
     <meta name="keywords" content="ELRC, LRC, lyrics, lyrics sync, lyrics creator, lyrics generator, LRC generator, ELRC generator, synced lyrics, timed lyrics, lrc parser">
     <meta property="og:type" content="website">
@@ -30,21 +30,19 @@
                     <path fill="currentColor" d="M12 22q-2.05 0-3.875-.788t-3.187-2.15t-2.15-3.187T2 12q0-2.075.813-3.9t2.2-3.175T8.25 2.788T12.2 2q2 0 3.775.688t3.113 1.9t2.125 2.875T22 11.05q0 2.875-1.75 4.413T16 17h-1.85q-.225 0-.312.125t-.088.275q0 .3.375.863t.375 1.287q0 1.25-.687 1.85T12 22m-4.425-9.425Q8 12.15 8 11.5t-.425-1.075T6.5 10t-1.075.425T5 11.5t.425 1.075T6.5 13t1.075-.425m3-4Q11 8.15 11 7.5t-.425-1.075T9.5 6t-1.075.425T8 7.5t.425 1.075T9.5 9t1.075-.425m5 0Q16 8.15 16 7.5t-.425-1.075T14.5 6t-1.075.425T13 7.5t.425 1.075T14.5 9t1.075-.425m3 4Q19 12.15 19 11.5t-.425-1.075T17.5 10t-1.075.425T16 11.5t.425 1.075T17.5 13t1.075-.425M12 20q.225 0 .363-.125t.137-.325q0-.35-.375-.825T11.75 17.3q0-1.05.725-1.675T14.25 15H16q1.65 0 2.825-.962T20 11.05q0-3.025-2.312-5.038T12.2 4Q8.8 4 6.4 6.325T4 12q0 3.325 2.338 5.663T12 20" />
                 </svg>
             </button>
-            <label id="importAudio" title="Open audio file">
+            <button type="button" id="importAudio" title="Open audio file">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M7.175 19.825Q6 18.65 6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21t-2.825-1.175" />
+                    <path fill="var(--accent-primary)" d="M7.175 19.825Q6 18.65 6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21t-2.825-1.175" />
                 </svg>
                 Open Audio
-                <input type="file" id="audioFile" accept="audio/*" style="display: none">
-            </label>
-            <label id="importLRC" title="Open LRC/ELRC file">
+            </button>
+            <input type="file" id="audioFile" accept="audio/*" class="hidden-file-picker">
+            <button type="button" id="importBtn" title="Open LRC/TXT">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
-                    <path d="M0 0h24v24H0z" fill="none" />
-                    <path fill="currentColor" d="M7 14h2q.425 0 .713-.288T10 13t-.288-.712T9 12H7q-.425 0-.712.288T6 13t.288.713T7 14m12-2q-1.25 0-2.125-.875T16 9t.875-2.125T19 6q.275 0 .525.05t.475.125V2q0-.425.288-.712T21 1h2q.425 0 .713.288T24 2t-.288.713T23 3h-1v6q0 1.25-.875 2.125T19 12M7 11h5q.425 0 .713-.288T13 10t-.288-.712T12 9H7q-.425 0-.712.288T6 10t.288.713T7 11m0-3h5q.425 0 .713-.288T13 7t-.288-.712T12 6H7q-.425 0-.712.288T6 7t.288.713T7 8m8 10H6l-2.3 2.3q-.15.15-.325.225T3 20.6q-.4 0-.7-.288t-.3-.737V4q0-.825.588-1.412T4 2h11q.825 0 1.413.588T17 4v.425q-.6.275-1.1.675T15 6V4H4v13.175L5.175 16H15v-4q.4.5.9.9t1.1.675V16q0 .825-.587 1.413T15 18M4 16V4z" />
+                    <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z" />
                 </svg>
-                Open LRC/TXT
-                <input type="file" id="lrcFile" accept=".lrc, .txt" style="display: none;">
-            </label>
+                Import
+            </button>
             <button type="button" id="exportELRC" title="Export ELRC">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24">
                     <path fill="currentColor" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z" />
@@ -58,7 +56,7 @@
 <div class="track-info">
     <div class="track-info-header">
         <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
-            <path style="fill: var(--accent-primary)" d="M11 17h2v-6h-2zm1.713-8.287Q13 8.425 13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9t.713-.288M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />
+            <path d="M11 17h2v-6h-2zm1.713-8.287Q13 8.425 13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9t.713-.288M12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />
         </svg>
         <p>TRACK INFO</p>
     </div>
@@ -85,7 +83,7 @@
 
 <div class="preview-header">
     <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
-        <path style="fill: var(--accent-primary)" d="m8 18l-6-6l6-6l1.425 1.425l-4.6 4.6L9.4 16.6zm8 0l-1.425-1.425l4.6-4.6L14.6 7.4L16 6l6 6z" />
+        <path d="m8 18l-6-6l6-6l1.425 1.425l-4.6 4.6L9.4 16.6zm8 0l-1.425-1.425l4.6-4.6L14.6 7.4L16 6l6 6z" />
     </svg>
     <p>ELRC Preview</p>
 </div>
@@ -169,7 +167,7 @@
         <div id="about-instructions" class="about-content active">
             <h3>How to Use</h3>
             <p>1. <strong class="accent">Load Audio</strong>: Click on the <strong>Open Audio</strong> button to load a track. Metadata input fields will automatically be filled if your audio files have them.</p>
-            <p>2. <strong class="accent">Load Lyrics / Add Lines</strong>: Click on the <strong>Open LRC/TXT</strong> button to load an existing ELRC/LRC or TXT file.<br><br>In the case of importing a TXT file, synced+ will read per line and add a lyric line card in the main workspace for each. Alternatively, you can opt not to import a text/lrc file and manually add lyric lines yourself.</p>
+            <p>2. <strong class="accent">Load Lyrics / Add Lines</strong>: Click on the <strong>Import</strong> button to load an LRC/TXT file or paste from the clipboard.
             <p>3. <strong class="accent">Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time.<br><br>To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.<br><br>Line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation.</p>
             <p>4. <strong class="accent">Export</strong>: Click on the <strong>Export</strong> button to choose your preferred format and download your .lrc file.</p>
         </div>
@@ -203,36 +201,17 @@
             </table>
         </div>
         <div id="about-credits" class="about-content">
-            <div class="credits-line">
-                <h3>Privacy Notice</h3>
-                <p>All processing is done locally. No audio or text gets sent to a server.</p>
-            </div>
-            <div class="credits-line">
-                <h3>Changes since <code>v1.0.1</code></h3>
-                <ul>
-                    <li>Implemented wavesurfer regions plugin</li>
-                    <li>Added undo/redo and lyric draft saving</li>
-                    <li>Added back [offset:] field (functional this time)</li>
-                    <li>Fix RangeError</li>
-                    <li>Replaced native alert and confirm dialogues with custom ones</li>
-                    <li>Added this Help & About modal</li>
-                    <li>JS code clean-up</li>
-                    <li>Added transition when changing themes</li>
-                </ul>
-            </div>
-            <div class="credits-line">
-                <h3>Credits</h3>
-                <a href="https://wavesurfer.xyz" target="_blank" rel="noopener noreferrer">wavesurfer.js</a>
-                <a href="https://github.com/aadsm/jsmediatags" target="_blank" rel="noopener noreferrer">jsmediatags</a>
-                <a href="https://www.joshwcomeau.com/css/custom-css-reset/" target="_blank" rel="noopener noreferrer">CSS Reset</a>
-            </div>
             <div class="about-credits-row">
-                <h3>synced+ <code>v1.1.0</code></h3>
-                <a href="https://github.com/mono-o-o/synced-plus" target="_blank" rel="noopener noreferrer" title="GitHub Repo">
+                <div class="about-logo-wrapper">
+                    <span class="about-logo base-text">synced<span class="accent">+</span></span>
+                    <span class="about-logo scan-text">synced<span class="accent">+</span></span>
+                </div>
+                <code id="versionDisp"></code>
+                <button type="button" onclick="openExtLink('https://github.com/mono-o-o/synced-plus')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2" />
                     </svg>
-                </a>
+                </button>
                 <button class="copy-btn" onClick="copyToClipboard(this, '.mono_o'); return false;" title="Copy mono's Discord Username">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.1.1 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.1 16.1 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02M8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12m6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12" />
@@ -241,12 +220,83 @@
                 </button>
             </div>
             <div class="credits-line">
+                <button type="button" id="checkUpdateBtn" class="primary-btn">Check for updates</button>
+            </div>
+            <div class="credits-line">
+                <h3>Changes since <code>v1.1.0 <span style="font-size: var(--text-xs); color: var(--accent-muted);">(last updated 18.07.26)</span></code></h3>
+                <ul>
+                    <h3>New</h3>
+                    <li>APK version (massive headache)</li>
+                    <li>Paste import</li>
+                    <li>Update checker</li>
+                    <li>Autosave debounce</li>
+                    <li>Show file name on draft load</li>
+                    <li>Animation for word highlight and modal pop-in</li>
+                    <li>Audio loading toast</li>
+                    <li>Cute logo  animation</li>
+
+                    <h3>Fixed</h3>
+                    <li>Preview highlight not showing after undo/redo on pause</li>
+                    <li>[length:] only updating after editing a new line</li>
+
+                    <h3>Improved</h3>
+                    <li>Used float for time logic instead of converting strings</li>
+                    <li>Transitioned to O(1) lookups for the most part</li>
+                    <li>Significantly lowered draft size</li>
+                    <li>Even less DOM dependency</li>
+                    <li>Implemented error handling on some functions</li>
+                    <li>Removed autoplay when clicking on regions</li>
+                    <li>Removed fugly blue tap highlights on mobile</li>
+                </ul>
+            </div>
+            <div class="credits-line">
+                <h3>Privacy Notice</h3>
+                <p>All processing is done locally. No audio or text gets sent to a server.</p>
+            </div>
+            <div class="credits-line">
+                <h3>Credits</h3>
+                <button onclick="openExtLink('https://wavesurfer.xyz')">wavesurfer.js</button>
+                <button onclick="openExtLink('https://github.com/aadsm/jsmediatags')">jsmediatags</button>
+                <button onclick="openExtLink('https://www.joshwcomeau.com/css/custom-css-reset/')">CSS Reset</button>
+            </div>
+            <div class="credits-line">
                 <p>made with <3 by mono</p>
             </div>
         </div>
     </div>
 </dialog>
 <div class="theme-overlay"></div>
+<div class="import-overlay">
+    <div class="export-card" id="importLRCCard">
+        <div class="export-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M7 14h2q.425 0 .713-.288T10 13t-.288-.712T9 12H7q-.425 0-.712.288T6 13t.288.713T7 14m12-2q-1.25 0-2.125-.875T16 9t.875-2.125T19 6q.275 0 .525.05t.475.125V2q0-.425.288-.712T21 1h2q.425 0 .713.288T24 2t-.288.713T23 3h-1v6q0 1.25-.875 2.125T19 12M7 11h5q.425 0 .713-.288T13 10t-.288-.712T12 9H7q-.425 0-.712.288T6 10t.288.713T7 11m0-3h5q.425 0 .713-.288T13 7t-.288-.712T12 6H7q-.425 0-.712.288T6 7t.288.713T7 8m8 10H6l-2.3 2.3q-.15.15-.325.225T3 20.6q-.4 0-.7-.288t-.3-.737V4q0-.825.588-1.412T4 2h11q.825 0 1.413.588T17 4v.425q-.6.275-1.1.675T15 6V4H4v13.175L5.175 16H15v-4q.4.5.9.9t1.1.675V16q0 .825-.587 1.413T15 18M4 16V4z" />
+            </svg>
+            <span>Import LRC / ELRC</span>
+        </div>
+        <p>Import a synced lyric file. Timestamps and metadata are automatically detected and mapped into the workspace.</p>
+        <input type="file" id="lrcFileInput" accept=".lrc" class="hidden-file-picker">
+    </div>
+    <div class="export-card" id="importTXTCard">
+        <div class="export-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M5 19h14V9.825L14.175 5H5zm0 2q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h9.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V19q0 .825-.587 1.413T19 21zm3-4h8q.425 0 .713-.288T17 16t-.288-.712T16 15H8q-.425 0-.712.288T7 16t.288.713T8 17m0-4h8q.425 0 .713-.288T17 12t-.288-.712T16 11H8q-.425 0-.712.288T7 12t.288.713T8 13m0-4h5q.425 0 .713-.288T14 8t-.288-.712T13 7H8q-.425 0-.712.288T7 8t.288.713T8 9M5 19V5z" />
+            </svg>
+            <span>Import TXT</span>
+        </div>
+        <p>Import a plaintext file. Separates every line as new lyric lines in the workspace.</p>
+        <input type="file" id="txtFileInput" accept=".txt" class="hidden-file-picker">
+    </div>
+    <div class="export-card" id="importPasteCard">
+        <div class="export-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h4.175q.275-.875 1.075-1.437T12 1q1 0 1.788.563T14.85 3H19q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm0-2h14V5h-2v2q0 .425-.288.713T16 8H8q-.425 0-.712-.288T7 7V5H5zm7.713-14.288Q13 4.425 13 4t-.288-.712T12 3t-.712.288T11 4t.288.713T12 5t.713-.288" />
+            </svg>
+            <span>Paste from clipboard</span>
+        </div>
+        <p>Directly paste lyrics from your clipboard or type them. Automatically determines if the input is LRC or plaintext. Separates every line as new lyric lines in the workspace.</p>
+    </div>
+</div>
 <div class="export-overlay">
     <div class="export-card" id="exportStandard">
         <div class="export-header">
@@ -273,7 +323,7 @@
         <input type="text" id="author" placeholder="Your Name" title="[by:]">
     </div>
     <div class="info-field">
-        <label for="offset">Offset (ms):</label>
+        <label for="offset">Global Offset (ms):</label>
         <input type="number" id="offset" value="0" title="[offset:]">
     </div>
 </div>
@@ -291,6 +341,19 @@
         <button id="confirmYesBtn" class="primary-btn">Yes</button>
     </div>
 </dialog>
+<dialog id="pasteDialogue" class="custom-dialog paste-dialog">
+    <p>Paste or type your lyrics below.</p>
+    <textarea id="pasteInput" placeholder="Paste or type lyrics here..."></textarea>
+    <div class="dialog-buttons">
+        <button id="pasteCancelBtn" class="secondary-btn">Cancel</button>
+        <button id="pasteImportBtn" class="primary-btn">Import</button>
+    </div>
+</dialog>
+<div id="loadingToast" class="toast">
+    <div class="toast-spinner"></div>
+    <span>loading audio...</span>
+</div>
 <script src="js/index.js"></script>
 </body>
 </html>
+

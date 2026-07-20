@@ -1,6 +1,7 @@
 /* CSS reset by Josh W. Comeau */
 *, *::before, *::after {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 *:not(dialog) {
@@ -135,6 +136,19 @@ h1, h2, h3, h4, h5, h6 {
     src: url('../fonts/fira-code-v27-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
+code {font-family: 'Fira Code', monospace;}
+
+.hidden-file-picker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+}
+
 body {
     font-family: 'Epilogue', sans-serif;
     display: grid;
@@ -215,7 +229,7 @@ header button {
     font-size: var(--text-sm);
 }
 
-#importAudio, #importLRC {
+#importAudio, #importBtn {
     background: none;
     border: none;
     color: var(--accent-txt);
@@ -234,11 +248,11 @@ header button {
     user-select: none;
 }
 
-#importAudio:hover, #themeSwitch:hover, #importLRC:hover {
+#importAudio:hover, #themeSwitch:hover, #importBtn:hover {
     box-shadow: 0 0 0 1px var(--accent-txt);
 }
 
-#importLRC.disabled {
+#importBtn.disabled {
     box-shadow: 0 0 0 1px var(--accent-muted) !important;
     color: var(--accent-muted);
     cursor: not-allowed;
@@ -357,13 +371,15 @@ header button {
     height: 170px;
     overflow: hidden;
     flex-shrink: 0;
+    padding: 0 var(--space-8);
 }
 
 #waveform {
-    padding: 0 var(--space-8);
     z-index: 1;
     font-family: 'Fira Code', monospace;
     height: 170px;
+    position: relative;
+    width: 100%;
 }
 
 #waveform ::part(scroll) {
@@ -555,6 +571,26 @@ header button {
 }
 
 #volumeSlider input::-webkit-slider-thumb:hover {
+    background-color: var(--accent-primary);
+    transform: scale(1.1);
+}
+
+#volumeSlider input::-moz-range-track {
+    background: transparent;
+    height: 4px;
+}
+
+#volumeSlider input::-moz-range-thumb {
+    border: none;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-txt);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+#volumeSlider input::-moz-range-thumb:hover {
     background-color: var(--accent-primary);
     transform: scale(1.1);
 }
@@ -817,7 +853,7 @@ header button {
     transition: color var(--transition-fast);
 }
 
-.theme-overlay, .export-overlay, .meta-overlay {
+.theme-overlay, .export-overlay, .meta-overlay, .import-overlay {
     grid-row: 3;
     grid-column: 2;
     background-color: var(--accent-srf);
@@ -838,7 +874,7 @@ header button {
 
 .meta-overlay .info-field {flex: none;}
 
-.theme-overlay.is-active, .export-overlay.is-active, .meta-overlay.is-active {display: flex;}
+.theme-overlay.is-active, .export-overlay.is-active, .meta-overlay.is-active, .import-overlay.is-active {display: flex;}
 
 .theme-card {
     display: flex;
@@ -929,6 +965,8 @@ dialog.about-modal::backdrop {
 .about-tabs {
     display: flex;
     gap: var(--space-2);
+    width: 100%;
+    justify-content: space-between;
 }
 
 .about-tab {
@@ -940,6 +978,9 @@ dialog.about-modal::backdrop {
     padding: var(--space-2) var(--space-4);
     transition: color var(--transition-fast), border-color var(--transition-fast);
     border-bottom: 2px solid transparent;
+    flex: 1;
+    text-align: center;
+    width: 100%;
 }
 
 .about-tab:hover {color: var(--accent-txt);}
@@ -1000,7 +1041,11 @@ dialog.about-modal::backdrop {
 
 .about-credits-row h3 {margin-bottom:0; margin-top: var(--space-4);}
 
-.about-credits-row a, .copy-btn {
+.about-credits-row:first-of-type {
+    margin-bottom: var(--space-4);
+}
+
+.about-credits-row button, .copy-btn {
     color: var(--accent-muted);
     transition: color var(--transition-fast);
     display: flex;
@@ -1012,7 +1057,7 @@ dialog.about-modal::backdrop {
     padding: 0;
 }
 
-.about-credits-row a:hover, .copy-btn:hover {
+.about-credits-row button:hover, .copy-btn:hover {
     color: var(--accent-primary);
 }
 
@@ -1040,14 +1085,20 @@ dialog.about-modal::backdrop {
 
 .credits-line:not(:last-of-type) {margin-bottom: var(--space-4);}
 
-.credits-line a {
+.credits-line button:not(#checkUpdateBtn) {
     color: var(--accent-primary);
     text-decoration: none;
     display: inline-block;
     margin-right: var(--space-2);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-sm);
+    padding: 0;
+    transition: color var(--transition-fast);
 }
 
-.credits-line a:hover {text-decoration: underline;}
+.credits-line button:not(#checkUpdateBtn):hover {text-decoration: underline; color: var(--accent-txt);}
 .credits-line ul {padding-left: var(--space-4);}
 
 dialog.custom-dialog {
@@ -1103,6 +1154,165 @@ dialog.custom-dialog p {
 }
 
 .secondary-btn:hover {color: var(--accent-primary);}
+
+.paste-dialog {max-width: 600px;}
+
+#pasteInput {
+    width: 100%;
+    height: 250px;
+    background: var(--accent-bg);
+    color: var(--accent-txt);
+    border: 1px solid var(--accent-muted);
+    border-radius: 0.25rem;
+    padding: var(--space-4);
+    margin-bottom: var(--space-6);
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color var(--transition-fast);
+}
+
+#pasteInput:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+}
+
+.toast {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    background-color: var(--accent-srf);
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-txt);
+    padding: var(--space-2) var(--space-4);
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--text-sm);
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#checkUpdateBtn {
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    margin-top: -1rem;
+    transition: background-color var(--transition-fast);
+}
+
+#checkUpdateBtn:hover {background-color: var(--accent-txt);}
+
+.track-info-header svg path,
+.preview-header svg path,
+.export-header svg {
+    fill: var(--accent-primary) !important;
+}
+
+.credits-line ul h3 {
+    margin-bottom: 0;
+    color: var(--accent-tertiary);
+}
+
+.about-logo-wrapper {
+    display: inline-block;
+    position: relative;
+    font-size: var(--text-2xl) !important;
+    padding-right: 4px;
+    font-weight: bold;
+}
+
+.about-logo.base-text {
+    color: var(--accent-secondary);
+    display: block;
+}
+
+.about-logo.scan-text {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    color: var(--accent-primary);
+    animation: logoReveal 3.5s linear infinite;
+}
+
+.about-logo-wrapper:after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px;
+    height: 100%;
+    background-color: var(--accent-txt);
+    box-shadow: 0 0 8px var(--accent-txt);
+    pointer-events: none;
+    z-index: 2;
+    animation: logoSeekLine 3.5s linear infinite;
+}
+
+#versionDisp {
+    color: var(--accent-tertiary);
+    font-size: var(--text-xl);
+    -webkit-text-fill-color: var(--accent-tertiary);
+    font-weight: bold;
+}
+
+/* animations */
+
+@keyframes popIn {
+    from {opacity: 0; transform: scale(0.95);}
+    to {opacity: 1; transform: scale(1);}
+}
+
+dialog.custom-dialog[open],
+dialog.about-modal[open],
+dialog.paste-dialog[open] {
+    animation: popIn 0.2s cubic-bezier(0.15, 0.75, 0.5, 1.25) forwards;
+}
+
+@keyframes wordPop {
+    0% {transform: scale(1);}
+    50% {transform: scale(1.05);}
+    100% {transform: scale(1);}
+}
+
+.active-word-card {animation: wordPop 0.2s ease-out;}
+
+.toast-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 3px solid var(--accent-secondary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: toastSpin 0.8s linear infinite;
+}
+
+@keyframes toastSpin {
+    to {transform: rotate(360deg);}
+}
+
+@keyframes logoSeekLine {
+    0% {left: 0; opacity: 0;}
+    5% {opacity: 1;}
+    66.4% {opacity: 1;}
+    71.4% {left: 100%; opacity: 0;}
+    100% {left: 100%; opacity: 0;}
+}
+
+@keyframes logoReveal {
+    0% {clip-path: inset(0 100% 0 0); opacity: 1;}
+    71.4% {clip-path: inset(0 0% 0 0); opacity: 1;}
+    85.7% {clip-path: inset(0 0% 0 0); opacity: 1;}
+    100% {clip-path: inset(0 0% 0 0); opacity: 0;}
+}
 
 /* responsiveness yay ! */
 
@@ -1221,9 +1431,10 @@ dialog.custom-dialog p {
     .sidebar .preview,
     .sidebar .theme-overlay,
     .sidebar .export-overlay,
-    .sidebar .meta-overlay {
+    .sidebar .meta-overlay,
+    .sidebar .import-overlay {
         border: none;
-        min-height: 300px;
+        min-height: 500px;
         flex: 1;
     }
 
@@ -1286,4 +1497,34 @@ dialog.custom-dialog p {
     }
 
     .volume-wrapper {display: none !important;}
+
+    .toast {bottom: calc(80px + var(--space-4));}
+
+    dialog.custom-dialog,
+    dialog.about-modal,
+    dialog.paste-dialog {
+        margin-top: auto;
+        margin-bottom: 0;
+        width: 85%;
+        max-width: 100vw;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    dialog.about-modal,
+    dialog.paste-dialog {
+        width: 100%;
+        border-width: 1px 0 0 0;
+    }
+
+    @keyframes slideUp {
+        from {opacity: 0; transform: translateY(100%);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+
+    dialog.custom-dialog[open],
+    dialog.about-modal[open],
+    dialog.paste-dialog[open] {
+        animation: slideUp 0.2s ease-out forwards;
+    }
 }

@@ -12,3 +12,5 @@ src-tauri/target/
 src-tauri/gen/
 .env
 .env*.local
+qodana.yaml
+synced-plus-universal.apk

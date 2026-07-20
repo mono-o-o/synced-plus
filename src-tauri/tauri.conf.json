@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "synced+",
-  "version": "1.1.0",
-  "identifier": "com.mono.syncedplus",
+  "version": "1.2.0",
+  "identifier": "mono.syncedplus",
   "build": {
     "frontendDist": "../src",
     "beforeDevCommand": "",
@@ -14,8 +14,8 @@
         "title": "ELRC Creator | synced+",
         "width": 1280,
         "height": 720,
-        "minWidth": 1024,
-        "minHeight": 576,
+        "minWidth": 405,
+        "minHeight": 720,
         "center": true,
         "resizable": true,
         "fullscreen": false,
@@ -23,7 +23,11 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'"
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      },
+      "csp": "default-src 'self'; connect-src 'self' https://api.github.com blob: asset: https://tauri.localhost http://asset.localhost; media-src 'self' blob: asset: https://tauri.localhost http://asset.localhost; style-src 'self' 'unsafe-inline';"
     }
   },
   "bundle": {

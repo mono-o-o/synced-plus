@@ -35,7 +35,7 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
   Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
 
 - ### <strong>Smart File Import</strong>
-  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC and TXT for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
+  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC, TXT, or paste from the clipboard (which automatically checks if input is lrc/plaintext) for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
 
 - ### <strong>Smart Time Field Setting</strong>
   Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
@@ -53,9 +53,9 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
 1. <strong>Load Audio</strong>: Click on the <strong>Open Audio</strong> button to load a track. Metadata input fields will automatically be filled if your audio files have them.
 2. <strong>Load Lyrics / Add Lines</strong>: Click on the <strong>Open LRC/TXT</strong> button to load an existing ELRC/LRC or TXT file.
 
-   In the case of importing a TXT file, synced+ will read per line and add a lyric line card in the main workspace for each.
+   If importing plaintext, synced+ will read per line and add a lyric line card in the main workspace for each.
 
-   Alternatively, you can opt not to import a text/lrc file and manually add lyric lines yourself.
+   Alternatively, you can opt not to import any text entirely and manually add each lyric line yourself.
 
 3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.
 
@@ -107,6 +107,12 @@ synced+ is written in vanilla HTML/CSS/JS, but it does use two crucial libraries
 * <a href="https://github.com/aadsm/jsmediatags">jsmediatags</a> – Reading and writing of audio metadata tags for files supported by the library.
 
 Additionally, it uses <a href="https://v2.tauri.app">Tauri</a> to work as a desktop application.
+
+<br>
+
+## AI Transparency
+
+AI has been used to generate the GitHub workflows, colour palettes for the themes (except for Default and Evil Calamity), rough draft for LICENSES.md, and to guide with Tauri integration.
 
 <br>
 
