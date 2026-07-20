@@ -106,7 +106,7 @@ synced+ is written in vanilla HTML/CSS/JS, but it does use two crucial libraries
 * <a href="https://wavesurfer.xyz">wavesurfer.js</a> – Waveform rendering, playback controls, current playback time fetching.
 * <a href="https://github.com/aadsm/jsmediatags">jsmediatags</a> – Reading and writing of audio metadata tags for files supported by the library.
 
-Additionally, it uses <a href="https://v2.tauri.app">Tauri</a> to work as a desktop application.
+Additionally, it uses <a href="https://v2.tauri.app">Tauri</a> to work as a desktop and mobile application.
 
 <br>
 
