@@ -6,16 +6,14 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
 
 <br>
 
-## Screenshots
-
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/f19ebc27-1b43-4af7-b46d-e3dae767d527" /></td>
-    <td><img src="https://github.com/user-attachments/assets/4380c3c4-d4de-4876-bfcc-4e4496e9e018" /></td>
+    <td><img src="https://github.com/user-attachments/assets/6b0518de-0422-40f3-bb2a-b36cffece5b4" height="400"/></td>
+    <td><img src="https://github.com/user-attachments/assets/70b2726f-f9a8-451d-b50b-e2d6c06409c1" height="400"/></td>
   </tr>
   <tr align="center">
-    <td>Workspace</td>
-    <td>Themes</td>
+    <td>Desktop</td>
+    <td>Mobile</td>
   </tr>
 </table>
 
