@@ -670,7 +670,7 @@ header button {
     border: none;
     font-family: 'Fira Code', monospace;
     font-size: var(--text-sm);
-    width: 5.5rem;
+    width: 6rem;
     padding: var(--space-2);
     outline: none;
 }
@@ -1264,6 +1264,60 @@ dialog.custom-dialog p {
     -webkit-text-fill-color: var(--accent-tertiary);
     font-weight: bold;
 }
+
+.export-card.toggle-card .export-header {
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.export-card.toggle-card:hover {
+    border-color: var(--accent-muted);
+    background-color: var(--accent-srf);
+}
+
+.export-card.toggle-card:hover .export-header {
+    border-color: var(--accent-muted);
+    background-color: var(--accent-bg);
+    color: var(--accent-txt);
+}
+
+.styled-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    color: var(--accent-primary);
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--accent-txt);
+    border-radius: 100%;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.styled-checkbox::before {
+    content: '';
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 100%;
+    background-color: var(--accent-bg);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    display: block;
+    margin: 0;
+}
+
+.styled-checkbox:checked {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.styled-checkbox:checked::before {opacity: 1;}
 
 /* animations */
 

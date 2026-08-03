@@ -12,13 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let loadedAudio = null;
     let currTrackName = '';
 
-    const TIME_REGEX = /^(\d{2}):(\d{2})\.(\d{2})$/;
+    const TIME_REGEX = /^(\d{2}):(\d{2})\.(\d{2,3})$/;
+    const SRT_TIME_REGEX = /(\d{2}):(\d{2}):(\d{2})[,.](\d{3})/;
     const LINE_FORBIDDEN_CHARS_REGEX = /[<>]/g;
     const METADATA_REGEX = /^\[(ti|ar|al|by|offset):(.*?)]$/;
     const LINE_MATCH_REGEX = /^\[(\d{2}:\d{2}\.\d{2,3})](.*)$/;
     const WORD_SPLIT_REGEX = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
 
-    const CURRENT_VERSION = '1.2.0';
+    const CURRENT_VERSION = '1.2.1';
 
     window.openExtLink = async function(url) {
         if (window.__TAURI_INTERNALS__?.invoke) {
@@ -31,23 +32,51 @@ document.addEventListener('DOMContentLoaded', () => {
         } else window.open(url, '_blank');
     }
 
-    const formatTime = (seconds) => {
-        if (isNaN(seconds)) return '00:00.00';
-        const totalMsec = Math.round(seconds * 100);
-        const mins = Math.floor(totalMsec / 6000);
-        const secs = Math.floor((totalMsec % 6000) / 100);
-        const msec = totalMsec % 100;
-        if (msec === 100) return formatTime(seconds + 1);
+    const formatTime = (seconds, precision = 3) => {
+        if (isNaN(seconds)) return precision === 3 ? '00:00.000' : '00:00.00';
+        const factor = precision === 3 ? 1000 : 100;
+        const totalMs = Math.round(seconds * factor);
+        const mins = Math.floor(totalMs / (60 * factor));
+        const secs = Math.floor((totalMs % (60 * factor)) / factor);
+        const ms = totalMs % factor;
         const fMins = String(mins).padStart(2, '0');
         const fSecs = String(secs).padStart(2, '0');
-        const fMsec = String(msec).padStart(2, '0');
-        return `${fMins}:${fSecs}.${fMsec}`;
+        const fMs = String(ms).padStart(precision, '0');
+        return `${fMins}:${fSecs}.${fMs}`;
+    }
+
+    const formatSRTTime = (seconds) => {
+        if (isNaN(seconds)) return '00:00:00,000';
+        const totalMs = Math.round(seconds * 1000);
+        const hrs = Math.floor(totalMs / 3600000);
+        const mins = Math.floor((totalMs % 3600000) / 60000);
+        const secs = Math.floor((totalMs % 60000) / 1000);
+        const ms = totalMs % 1000;
+        const fHrs = String(hrs).padStart(2, '0');
+        const fMins = String(mins).padStart(2, '0');
+        const fSecs = String(secs).padStart(2, '0');
+        const fMs = String(ms).padStart(3, '0');
+        return `${fHrs}:${fMins}:${fSecs},${fMs}`;
     }
 
     const parseTime = (timeString) => {
         const match = timeString.match(TIME_REGEX);
         if (!match) return 0;
-        return parseInt(match[1]) * 60 + parseInt(match[2]) + parseInt(match[3]) / 100;
+        const mins = parseInt(match[1], 10);
+        const secs = parseInt(match[2], 10);
+        const fracStr = match[3];
+        const frac = parseInt(fracStr, 10) / Math.pow(10, fracStr.length);
+        return mins * 60 + secs + frac;
+    }
+
+    const parseSRTTime = (timeString) => {
+        const match = timeString.match(SRT_TIME_REGEX);
+        if (!match) return 0;
+        const hrs = parseInt(match[1], 10);
+        const mins = parseInt(match[2], 10);
+        const secs = parseInt(match[3], 10);
+        const ms = parseInt(match[4], 10);
+        return (hrs * 3600) + (mins * 60) + secs + (ms / 1000);
     }
 
     currTime.textContent = formatTime(0);
@@ -322,23 +351,68 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     }
 
-    wsRegions.on('region-updated', (r) => {
-        const lineData = lineMap.get(r.id);
-        if (lineData) {
-            lineData.start = r.start;
-            lineData.end = r.end;
-            const lineCard = document.querySelector(`.line-card[data-id="${r.id}"]`);
-            if (lineCard) {
-                lineCard.querySelector('.line-start').value = formatTime(r.start);
-                lineCard.querySelector('.line-end').value = formatTime(r.end);
+    let isValidatingRegion = false;
+    let preDragState = null;
+    wsRegions.on('region-update', (r) => {
+        if (isValidatingRegion) return;
+        if (!preDragState) preDragState = JSON.stringify(compressLines(lineArray));
+        const index = lineArray.findIndex(l => l.id === r.id);
+        if (index !== -1) {
+            const line = lineArray[index];
+            const prevLine = lineArray[index - 1];
+            const nextLine =lineArray[index + 1];
+            let newStart = r.start;
+            let newEnd = r.end;
+            const oldDuration = line.end - line.start;
+            const newDuration = newEnd - newStart;
+            const isMoving = Math.abs(oldDuration - newDuration) < 0.05;
+
+            const minStart = prevLine ? prevLine.end : 0;
+            const maxEnd = nextLine ? nextLine.start : (wavesurfer.getDuration() || Infinity);
+
+            if (isMoving) {
+                if (newStart < minStart) {
+                    newStart = minStart;
+                    newEnd = newStart + oldDuration;
+                } else if (newEnd > maxEnd) {
+                    newEnd = maxEnd;
+                    newStart = newEnd - oldDuration;
+                }
+            } else {
+                if (newStart < minStart) newStart = minStart;
+                if (newEnd > maxEnd) newEnd = maxEnd;
+                if (newEnd < newStart) newEnd = newStart;
             }
+
+            lineArray[index].start = newStart;
+            lineArray[index].end = newEnd;
+            validateTimes(index);
+            isValidatingRegion = true;
+            r.setOptions({start: lineArray[index].start, end: lineArray[index].end});
+            const lineCard = document.querySelector(`.line-card[data-id="${lineArray[index].id}"]`);
+            if (lineCard) {
+                lineCard.querySelector('.line-start').value = formatTime(lineArray[index].start);
+                lineCard.querySelector('.line-end').value = formatTime(lineArray[index].end);
+            }
+            isValidatingRegion = false;
         }
     })
 
-    wsRegions.on('update-end', (r) => {
+    wsRegions.on('region-updated', (r) => {
         const lineData = lineMap.get(r.id);
         if (lineData) {
             validateTimes(lineArray.findIndex(l => l.id === r.id));
+
+            if (preDragState) {
+                const currState = JSON.stringify(compressLines(lineArray));
+                if (currState !== preDragState && (undoStack.length === 0 || undoStack[undoStack.length - 1] !== preDragState)) {
+                    undoStack.push(preDragState);
+                    if (undoStack.length > maxHistory) undoStack.shift();
+                    redoStack = [];
+                }
+                preDragState = null;
+            }
+
             renderWorkspace();
             updatePreview();
             saveImmediately();
@@ -469,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.classList.contains('time-input')) {
             let digits = e.target.value.replace(/\D/g, '');
-            digits = digits.substring(0, 6);
+            digits = digits.substring(0, 7);
             let formatted = '';
             for (let i = 0; i < digits.length; i++) {
                 if (i === 2) {
@@ -504,13 +578,15 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = startIndex; i < lineArray.length; i++) {
             const currentLine = lineArray[i];
             const prevLine = lineArray[i-1];
+            const nextLine = lineArray[i+1];
+
             let startSec = currentLine.start;
             let endSec = currentLine.end;
 
             if (duration > 0 && startSec > duration) startSec = duration;
-            if (prevLine) {
-                if (startSec < prevLine.end) startSec = prevLine.end;
-            }
+            if (prevLine && startSec < prevLine.end) startSec = prevLine.end;
+            if (nextLine && endSec > nextLine.start) endSec = nextLine.start;
+
             if (endSec < startSec) endSec = startSec;
             if (duration > 0 && endSec > duration) endSec = duration;
 
@@ -533,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const nextWord = currentLine.words[i+1];
                     if (nextWord && nextWord.time !== null && nextWord.time !== '') {
-                        if (wordSec > nextWord.time) nextWord.time = wordSec;
+                        if (wordSec > nextWord.time) wordSec = nextWord.time;
                     } else if (wordSec > endSec) wordSec = endSec;
                     w.time = wordSec;
                 })
@@ -998,12 +1074,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (album) elrc += `[al:${album}]\n`;
         if (by) elrc += `[by:${by}]\n`;
         if (offset) elrc += `[offset:${offset}]\n`;
-        const length = formatTime(wavesurfer.getDuration());
+        const length = formatTime(wavesurfer.getDuration(), 2);
         elrc += `[length:${length}]\n[re:synced+ (https://github.com/mono-o-o/synced-plus)]\n[ve:${CURRENT_VERSION}]\n\n`;
 
         lineArray.forEach((l, i) => {
-            const startStr = formatTime(l.start);
-            const endStr = formatTime(l.end);
+            const startStr = formatTime(l.start, 2);
+            const endStr = formatTime(l.end, 2);
 
             if (l.words.length > 0) {
                 let lineStr = `[${startStr}]`;
@@ -1016,18 +1092,45 @@ document.addEventListener('DOMContentLoaded', () => {
                         else lineStr += `${w.text} `;
                     }
                 });
+
+                if (useTrailingEndTag && type === 'enhanced' && l.end && l.end > l.start) {
+                    if (forPreview) lineStr += `<span style="color: var(--accent-muted);" title="line end indicator">&lt;${endStr}&gt;</span>`;
+                    else lineStr += `<${endStr}>`;
+                }
+
                 elrc += lineStr.trimEnd() + '\n';
             } else {
                 if (forPreview) elrc += `<span id="prev-l${i}">[${startStr}]${l.text}</span>\n`;
                 else elrc += `[${startStr}]${l.text}\n`;
             }
 
-            if (l.end && l.end > l.start) {
-                if (forPreview) elrc += `<span>[${endStr}]</span>\n`;
+            if (!useTrailingEndTag && l.end && l.end > l.start) {
+                if (forPreview) elrc += `<span style="color: var(--accent-muted);" title="line end indicator">[${endStr}]</span>\n`;
                 else elrc += `[${endStr}]\n`;
             }
         })
         return elrc;
+    }
+
+    const generateSRT = () => {
+        let srt = '';
+        let seq = 1;
+
+        lineArray.forEach((l, i) => {
+            let start = l.start; let end = l.end;
+            if (!end || end === start) {
+                const nextLine = lineArray[i+1];
+                end = nextLine ? nextLine.start : start + 2;
+            }
+
+            const formattedText = l.text.replace(/\\n/g, '\n');
+            srt += `${seq}\n`;
+            srt += `${formatSRTTime(start)} --> ${formatSRTTime(end)}\n`;
+            srt += `${formattedText}\n\n`;
+            seq++;
+        })
+
+        return srt.trim();
     }
 
     const updatePreview = () => {
@@ -1041,13 +1144,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('#lines') || e.target.closest('.track-info')) updatePreview();
     })
 
-    const saveFile = async (lyricData, filename) => {
+    const saveFile = async (lyricData, filename, ext = 'lrc') => {
         if (window.__TAURI_INTERNALS__) {
             try {
                 const filePath = await window.__TAURI_INTERNALS__.invoke('plugin:dialog|save', {
                     options: {
-                        defaultPath: `${filename}.lrc`,
-                        filters: [{ name: 'lyrics', extensions: ['lrc', 'txt'] }]
+                        defaultPath: `${filename}.${ext}`,
+                        filters: [{
+                            name: ext === 'srt' ? 'SubRip Text (.srt)' : 'LRC (.lrc)',
+                            extensions: [ext, 'txt']
+                        }]
                     }
                 });
 
@@ -1056,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         path: filePath,
                         data: lyricData
                     });
-                    alert("File saved successfully!");
+                    await customAlert("Downloading now!");
                 }
             } catch (err) {
                 console.error("Downloading failed: ", err);
@@ -1067,11 +1173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${filename}.lrc`;
+                a.download = `${filename}.${ext}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                await customAlert("Downloading now!");
             } catch (err) {
                 console.error("Downloading failed: ", err);
             }
@@ -1160,11 +1267,39 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportELRC').addEventListener('click', () => togglePanel('export'));
     document.getElementById('metaBtn').addEventListener('click', () => togglePanel('meta'));
 
+    let useTrailingEndTag = localStorage.getItem('syncedplus:trailingTag') === 'true';
+    const lineEndToggle = document.getElementById('lineEndToggle');
+    const lineEndToggleCard = document.getElementById('lineEndToggleCard');
+
+    if (lineEndToggle) {
+        lineEndToggle.checked = useTrailingEndTag;
+        lineEndToggle.addEventListener('change', (e) => {
+            useTrailingEndTag = e.target.checked;
+            localStorage.setItem('syncedplus:trailingTag', useTrailingEndTag);
+            updatePreview();
+        });
+    }
+
+    if (lineEndToggleCard && lineEndToggle) {
+        lineEndToggleCard.addEventListener('click', (e) => {
+            if (e.target !== lineEndToggle) {
+                lineEndToggle.checked = !lineEndToggle.checked;
+                lineEndToggle.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
     const exportHandler = async (type) => {
         if (!loadedAudio) {await customAlert("Please load an audio file first!"); return;}
         if (lineArray.length === 0) {await customAlert("Empty workspace. Add at least one lyric line first before exporting."); return;}
 
-        const data = generateELRC(false, type);
+        let data = '';
+        let ext = 'lrc';
+        if (type === 'srt') {
+            data = generateSRT();
+            ext = 'srt';
+        } else data = generateELRC(false, type);
+
         if (!data) return;
         let title = 'synced_lyrics';
         if (currTrackName) title = currTrackName.replace(/\.[^/.]+$/, "");
@@ -1173,12 +1308,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (titleInput) title = titleInput;
         }
 
-        await saveFile(data, title);
+        await saveFile(data, title, ext);
         togglePanel(null);
     }
 
     document.getElementById('exportStandard').addEventListener('click', () => exportHandler('standard'));
     document.getElementById('exportEnhanced').addEventListener('click', () => exportHandler('enhanced'));
+    document.getElementById('exportSRT').addEventListener('click', () => exportHandler('srt'));
 
     fetch('themes.json')
         .then(res => res.json())
@@ -1214,61 +1350,101 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetInput = document.getElementById('offset');
         lineArray = [];
 
-        let isRawText = format === 'txt';
-        if (format === 'paste') isRawText = !text.match(/\[\d{2}:\d{2}\.\d{2,3}\]/);
-        if (isRawText) {
-            let lastTime = 0;
-            lines.forEach(l => {
-                const trimmed = l.trim();
-                if (!trimmed) return;
-                const newLine = createNewLine(lastTime);
-                newLine.text = trimmed;
-                newLine.words = trimmed.split(/\s+/).map(w => ({id: crypto.randomUUID(), time: null, text: w}));
-                lineArray.push(newLine);
+        if (format === 'srt') {
+            const blocks = text.trim().split(/\r?\n\r?\n/);
+            blocks.forEach(b => {
+                const blockLines = b.split(/\r?\n/);
+                if (blockLines.length >= 3) {
+                    const timeMatch = blockLines[1].match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/);
+                    if (timeMatch) {
+                        const start = parseSRTTime(timeMatch[1]);
+                        const end = parseSRTTime(timeMatch[2]);
+                        const content = blockLines.slice(2).join('\\n');
+                        const newLine = createNewLine(start);
+                        newLine.end = end;
+                        newLine.text = content;
+                        newLine.words = content.split(/\s+/).map(w => ({
+                            id: crypto.randomUUID(),
+                            time: null,
+                            text: w
+                        }))
+                        lineArray.push(newLine);
+                    }
+                }
             })
         } else {
-            lines.forEach(l => {
-                l = l.trim();
-                if (!l) return;
+            let isRawText = format === 'txt';
+            if (format === 'paste') isRawText = !text.match(/\[\d{2}:\d{2}\.\d{2,3}\]/);
+            if (isRawText) {
+                let lastTime = 0;
+                lines.forEach(l => {
+                    const trimmed = l.trim();
+                    if (!trimmed) return;
+                    const newLine = createNewLine(lastTime);
+                    newLine.text = trimmed;
+                    newLine.words = trimmed.split(/\s+/).map(w => ({id: crypto.randomUUID(), time: null, text: w}));
+                    lineArray.push(newLine);
+                })
+            } else {
+                lines.forEach(l => {
+                    l = l.trim();
+                    if (!l) return;
 
-                const metaMatch = l.match(METADATA_REGEX);
-                if (metaMatch) {
-                    if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
-                    if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
-                    if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
-                    if (metaMatch[1] === 'by') byInput.value = metaMatch[2];
-                    if (metaMatch[1] === 'offset') offsetInput.value = metaMatch[2];
-                    titleInput.dispatchEvent(new Event('input', {bubbles:true}));
-                    return;
-                }
-
-                const lineMatch = l.match(LINE_MATCH_REGEX);
-                if (lineMatch) {
-                    const lineTime = parseTime(lineMatch[1]);
-                    let content = lineMatch[2];
-
-                    if (content.trim() === '') {
-                        if (lineArray.length > 0) lineArray[lineArray.length - 1].end = lineTime;
+                    const metaMatch = l.match(METADATA_REGEX);
+                    if (metaMatch) {
+                        if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
+                        if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
+                        if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
+                        if (metaMatch[1] === 'by') byInput.value = metaMatch[2];
+                        if (metaMatch[1] === 'offset') offsetInput.value = metaMatch[2];
+                        titleInput.dispatchEvent(new Event('input', {bubbles:true}));
                         return;
                     }
 
-                    const newLine = createNewLine(lineTime);
-                    WORD_SPLIT_REGEX.lastIndex = 0;
-                    let wordMatch;
+                    const lineMatch = l.match(LINE_MATCH_REGEX);
+                    if (lineMatch) {
+                        const lineTime = parseTime(lineMatch[1]);
+                        let content = lineMatch[2];
 
-                    if (content.includes('<') && content.includes('>')) {
-                        while ((wordMatch = WORD_SPLIT_REGEX.exec(content)) !== null) newLine.words.push({id: crypto.randomUUID(), time: parseTime(wordMatch[1]), text: wordMatch[2].trim()});
-                    }
+                        if (content.trim() === '') {
+                            if (lineArray.length > 0) {
+                                const lastLine = lineArray[lineArray.length-1];
+                                if (!lastLine.end || lastLine.end <= lastLine.start) {
+                                    lastLine.end = lineTime;
+                                    return;
+                                }
+                            }
 
-                    if (newLine.words.length > 0) newLine.text = newLine.words.map(w => w.text).join(' ');
-                    else {
-                        newLine.text = content;
-                        newLine.words = content.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: null, text: word}));
+                            lineArray.push(createNewLine(lineTime));
+                            return;
+                        }
+
+                        const newLine = createNewLine(lineTime);
+                        WORD_SPLIT_REGEX.lastIndex = 0;
+                        let wordMatch;
+
+                        if (content.includes('<') && content.includes('>')) {
+                            while ((wordMatch = WORD_SPLIT_REGEX.exec(content)) !== null) newLine.words.push({id: crypto.randomUUID(), time: parseTime(wordMatch[1]), text: wordMatch[2].trim()});
+                            if (newLine.words.length > 0) {
+                                const lastWord = newLine.words[newLine.words.length - 1];
+                                if (lastWord.text === '') {
+                                    newLine.end = lastWord.time;
+                                    newLine.words.pop();
+                                }
+                            }
+                        }
+
+                        if (newLine.words.length > 0) newLine.text = newLine.words.map(w => w.text).join(' ');
+                        else {
+                            newLine.text = content;
+                            newLine.words = content.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: null, text: word}));
+                        }
+                        lineArray.push(newLine);
                     }
-                    lineArray.push(newLine);
-                }
-            })
+                })
+            }
         }
+
         currentPlaybackIndex = -1;
         renderWorkspace();
         updatePreview();
@@ -1292,9 +1468,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('lrcFileInput').addEventListener('change', (e) => handleFileImport(e, 'lrc'));
     document.getElementById('txtFileInput').addEventListener('change', (e) => handleFileImport(e, 'txt'));
+    document.getElementById('srtFileInput').addEventListener('change', (e) => handleFileImport(e, 'srt'));
 
     document.getElementById('importLRCCard').addEventListener('click', () => document.getElementById('lrcFileInput').click());
     document.getElementById('importTXTCard').addEventListener('click', () => document.getElementById('txtFileInput').click());
+    document.getElementById('importSRTCard').addEventListener('click', () => document.getElementById('srtFileInput').click());
 
     const pasteDialogue = document.getElementById('pasteDialogue');
     const pasteInput = document.getElementById('pasteInput');

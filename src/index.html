@@ -223,35 +223,21 @@
                 <button type="button" id="checkUpdateBtn" class="primary-btn">Check for updates</button>
             </div>
             <div class="credits-line">
-                <h3>Changes since <code>v1.1.0 <span style="font-size: var(--text-xs); color: var(--accent-muted);">(last updated 18.07.26)</span></code></h3>
+                <h3>Changes since <code>v1.2.0 <span style="font-size: var(--text-xs); color: var(--accent-muted);">(last updated 22.07.26)</span></code></h3>
                 <ul>
                     <h3>New</h3>
-                    <li>APK version (massive headache)</li>
-                    <li>Paste import</li>
-                    <li>Update checker</li>
-                    <li>Autosave debounce</li>
-                    <li>Show file name on draft load</li>
-                    <li>Animation for word highlight and modal pop-in</li>
-                    <li>Audio loading toast</li>
-                    <li>Cute logo  animation</li>
+                    <li>SRT import/export</li>
+                    <li>Toggle to disable adding blank lines as line end times</li>
+                    <li>Blank line edge casing (for stuff like instrumental breaks/between verses)</li>
 
                     <h3>Fixed</h3>
-                    <li>Preview highlight not showing after undo/redo on pause</li>
-                    <li>[length:] only updating after editing a new line</li>
-
-                    <h3>Improved</h3>
-                    <li>Used float for time logic instead of converting strings</li>
-                    <li>Transitioned to O(1) lookups for the most part</li>
-                    <li>Significantly lowered draft size</li>
-                    <li>Even less DOM dependency</li>
-                    <li>Implemented error handling on some functions</li>
-                    <li>Removed autoplay when clicking on regions</li>
-                    <li>Removed fugly blue tap highlights on mobile</li>
+                    <li>Made it impossible to overlap regions</li>
+                    <li>Undo/redo should now work after dragging region start/end</li>
                 </ul>
             </div>
             <div class="credits-line">
                 <h3>Privacy Notice</h3>
-                <p>All processing is done locally. No audio or text gets sent to a server.</p>
+                <p>All processing is done locally. No audio or text gets sent to a server. Data is stored in client localStorage.</p>
             </div>
             <div class="credits-line">
                 <h3>Credits</h3>
@@ -287,6 +273,16 @@
         <p>Import a plaintext file. Separates every line as new lyric lines in the workspace.</p>
         <input type="file" id="txtFileInput" accept=".txt" class="hidden-file-picker">
     </div>
+    <div class="export-card" id="importSRTCard">
+        <div class="export-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h16V6H4zm0 0V6zm3-2h6q.425 0 .713-.288T14 15t-.288-.712T13 14H7q-.425 0-.712.288T6 15t.288.713T7 16m4-4h6q.425 0 .713-.288T18 11t-.288-.712T17 10h-6q-.425 0-.712.288T10 11t.288.713T11 12m-3.287-.288Q8 11.426 8 11t-.288-.712T7 10t-.712.288T6 11t.288.713T7 12t.713-.288m10 4Q18 15.426 18 15t-.288-.712T17 14t-.712.288T16 15t.288.713T17 16t.713-.288" />
+            </svg>
+            <span>Import SRT</span>
+        </div>
+        <p>Import an SRT file. Line breaks per block are shown as <code>\n</code>.</p>
+        <input type="file" id="srtFileInput" accept=".srt" class="hidden-file-picker">
+    </div>
     <div class="export-card" id="importPasteCard">
         <div class="export-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
@@ -298,6 +294,13 @@
     </div>
 </div>
 <div class="export-overlay">
+    <div class="export-card toggle-card" id="lineEndToggleCard">
+        <div class="export-header">
+            <input type="checkbox" id ="lineEndToggle" class="styled-checkbox">
+            <span>Disable blank new line as line end time</span>
+        </div>
+        <p>Disables adding a blank new line as a line's end time for standard and enhanced LRC, adding a trailing tag for the latter. Prettier, but compatibility may be limited.</p>
+    </div>
     <div class="export-card" id="exportStandard">
         <div class="export-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
@@ -315,6 +318,15 @@
             <span>Enhanced LRC</span>
         </div>
         <p>Provides line-by-line and word-by-word timestamping, but support is limited. Players like Namida support this format.</p>
+    </div>
+    <div class="export-card" id="exportSRT">
+        <div class="export-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h16V6H4zm0 0V6zm3-2h6q.425 0 .713-.288T14 15t-.288-.712T13 14H7q-.425 0-.712.288T6 15t.288.713T7 16m4-4h6q.425 0 .713-.288T18 11t-.288-.712T17 10h-6q-.425 0-.712.288T10 11t.288.713T11 12m-3.287-.288Q8 11.426 8 11t-.288-.712T7 10t-.712.288T6 11t.288.713T7 12t.713-.288m10 4Q18 15.426 18 15t-.288-.712T17 14t-.712.288T16 15t.288.713T17 16t.713-.288" />
+            </svg>
+            <span>SRT</span>
+        </div>
+        <p>Only provides line-by-line timestamping. Widely supported video subtitle format.</p>
     </div>
 </div>
 <div class="meta-overlay">
