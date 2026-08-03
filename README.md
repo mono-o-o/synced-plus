@@ -6,16 +6,14 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
 
 <br>
 
-## Screenshots
-
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/f19ebc27-1b43-4af7-b46d-e3dae767d527" /></td>
-    <td><img src="https://github.com/user-attachments/assets/4380c3c4-d4de-4876-bfcc-4e4496e9e018" /></td>
+    <td><img src="https://github.com/user-attachments/assets/6b0518de-0422-40f3-bb2a-b36cffece5b4" height="400"/></td>
+    <td><img src="https://github.com/user-attachments/assets/70b2726f-f9a8-451d-b50b-e2d6c06409c1" height="400"/></td>
   </tr>
   <tr align="center">
-    <td>Workspace</td>
-    <td>Themes</td>
+    <td>Desktop</td>
+    <td>Mobile</td>
   </tr>
 </table>
 
@@ -29,13 +27,13 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
   Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
 
 - ### <strong>Completely Offline</strong>
-  Works completely within your system, does not send any data into a server.
+  Works completely within your system, does not send any data to a server.
 
 - ### <strong>Interactive Waveform</strong>
   Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
 
 - ### <strong>Smart File Import</strong>
-  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC, TXT, or paste from the clipboard (which automatically checks if input is lrc/plaintext) for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio into the LRC file.
+  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC, TXT, or paste from the clipboard (which automatically checks if input is lrc/plaintext) for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio to the LRC file.
 
 - ### <strong>Smart Time Field Setting</strong>
   Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
@@ -44,7 +42,7 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
   Watch your ELRC file compile in realtime in a preview sidebar.
 
 - ### <strong>Themes !!!!</strong>
-  Choose from a selection of colour palettes that I totally do not use in my IDEs.
+  Choose from a selection of colour palettes I totally don't use in my IDEs.
 
 <br>
 
@@ -57,7 +55,7 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
 
    Alternatively, you can opt not to import any text entirely and manually add each lyric line yourself.
 
-3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.
+3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking the word jumps the audio playback to that time.
 
    Line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation.
 
@@ -118,6 +116,6 @@ AI has been used to generate the GitHub workflows, colour palettes for the theme
 
 ## License
 
-synced+ is licensed under the GNU AGPLv3 License. See the [LICENSE](LICENSE) file for details.
+synced+ is licensed under Mozilla Public License 2.0. See the [LICENSE](LICENSE) file for details.
 
 For full legal notices, copyright, disclosures, and open-source attributions regarding the assets used, see [LICENSES.md](LICENSES.md).
