@@ -184,7 +184,7 @@ header button {
     border-radius: 0.1rem;
 }
 
-#themeSwitch, #metaBtn {
+#themeSwitch, #metaBtn, #settingsBtn, #previewFormatBtn {
     width: 2.5rem;
     display: flex;
     align-items: center;
@@ -199,11 +199,7 @@ header button {
     border-radius: 0.1rem;
 }
 
-#metaBtn {width: 2rem; height: 2rem;}
-
-#metaBtn:hover {
-    box-shadow: 0 0 0 1px var(--accent-txt);
-}
+#metaBtn, #previewFormatBtn {width: 2rem; height: 2rem;}
 
 .title {
     color: var(--accent-txt);
@@ -248,7 +244,7 @@ header button {
     user-select: none;
 }
 
-#importAudio:hover, #themeSwitch:hover, #importBtn:hover {
+#importAudio:hover, #themeSwitch:hover, #importBtn:hover, #metaBtn:hover, #settingsBtn:hover, #previewFormatBtn:hover {
     box-shadow: 0 0 0 1px var(--accent-txt);
 }
 
@@ -270,6 +266,11 @@ header button {
 
 #exportELRC:hover {
     background-color: var(--accent-txt);
+}
+
+#exportELRC.disabled {
+    background-color: rgb(from var(--accent-primary) r g b / 0.5);
+    cursor: not-allowed;
 }
 
 .track-info {
@@ -362,6 +363,40 @@ header button {
     border-right: 1px solid var(--accent-muted);
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+.resume-scrolling-btn {
+    position: absolute;
+    bottom: var(--space-6);
+    left: 50%;
+    transform: translate(-50%, 20px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    background-color: var(--accent-srf);
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-txt);
+    padding: var(--space-2) var(--space-4);
+    border-radius: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+.resume-scrolling-btn.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+.resume-scrolling-btn:hover {
+    background-color: var(--accent-primary);
+    color: var(--accent-bg);
 }
 
 .waveform-wrapper {
@@ -853,7 +888,7 @@ header button {
     transition: color var(--transition-fast);
 }
 
-.theme-overlay, .export-overlay, .meta-overlay, .import-overlay {
+.theme-overlay, .export-overlay, .meta-overlay, .import-overlay, .settings-overlay {
     grid-row: 3;
     grid-column: 2;
     background-color: var(--accent-srf);
@@ -866,15 +901,20 @@ header button {
     scrollbar-color: var(--accent-secondary) var(--accent-bg);
 }
 
-.info-field input[type="number"] {font-family: 'Fira Code', monospace;}
-.info-field input[type="number"]::-webkit-inner-spin-button, .info-field input[type="number"]::-webkit-outer-spin-button {
+.info-field input[type="number"], .stepper-wrapper input[type="number"] {
+    font-family: 'Fira Code', monospace;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.info-field input[type="number"]::-webkit-inner-spin-button, .info-field input[type="number"]::-webkit-outer-spin-button,
+.stepper-wrapper input[type="number"]::-webkit-inner-spin-button, .stepper-wrapper input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.meta-overlay .info-field {flex: none;}
+.meta-overlay .info-field, .settings-overlay .info-field {flex: none;}
 
-.theme-overlay.is-active, .export-overlay.is-active, .meta-overlay.is-active, .import-overlay.is-active {display: flex;}
+.theme-overlay.is-active, .export-overlay.is-active, .meta-overlay.is-active, .import-overlay.is-active, .settings-overlay.is-active {display: flex;}
 
 .theme-card {
     display: flex;
@@ -1270,10 +1310,7 @@ dialog.custom-dialog p {
     gap: var(--space-3);
 }
 
-.export-card.toggle-card:hover {
-    border-color: var(--accent-muted);
-    background-color: var(--accent-srf);
-}
+.export-card.toggle-card:hover {background-color: var(--accent-srf);}
 
 .export-card.toggle-card:hover .export-header {
     border-color: var(--accent-muted);
@@ -1312,12 +1349,96 @@ dialog.custom-dialog p {
     margin: 0;
 }
 
+.export-card.toggle-card:hover .styled-checkbox {background-color: rgb(from var(--accent-primary) r g b / 0.5);}
+.export-card.toggle-card:hover .styled-checkbox::before {opacity: 1;}
+
 .styled-checkbox:checked {
-    background-color: var(--accent-primary);
+    background-color: var(--accent-primary) !important;
     border-color: var(--accent-primary);
 }
 
 .styled-checkbox:checked::before {opacity: 1;}
+
+.export-card.action-card {
+    text-align: left;
+    background: none;
+    padding: 0;
+    border: 1px solid var(--accent-muted);
+}
+
+.export-card.action-card .export-header {
+    border-bottom: none;
+    border-radius: 0.25rem;
+}
+
+.stepper-field {
+    align-items: center;
+}
+
+.stepper-wrapper {
+    display: flex;
+    align-items: stretch;
+    flex: 1;
+    height: 100%;
+}
+
+.stepper-wrapper button {
+    background: var(--accent-srf);
+    color: var(--accent-txt);
+    border: 1px solid var(--accent-muted);
+    width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.stepper-wrapper button:hover {
+    background-color: var(--accent-secondary);
+    color: var(--accent-primary);
+}
+
+.stepper-wrapper button:first-child {
+    border-radius: 0.1rem 0 0 0.1rem;
+    border-right: none;
+}
+
+.stepper-wrapper button:last-child {
+    border-radius: 0 0.1rem 0.1rem 0;
+    border-left: none;
+}
+
+.stepper-wrapper input {
+    border-radius: 0 !important;
+    text-align: center;
+}
+
+.hotkey-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hotkey-table td {
+    padding: var(--space-2) 0;
+    font-size: var(--text-sm);
+    color: var(--accent-txt);
+}
+
+.hotkey-btn {
+    background: var(--accent-srf);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-muted);
+    padding: var(--space-1) var(--space-2);
+    border-radius: 0.1rem;
+    font-family: 'Fira Code', monospace;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.hotkey-btn:hover { border-color: var(--accent-primary); }
 
 /* animations */
 
@@ -1366,6 +1487,17 @@ dialog.paste-dialog[open] {
     71.4% {clip-path: inset(0 0% 0 0); opacity: 1;}
     85.7% {clip-path: inset(0 0% 0 0); opacity: 1;}
     100% {clip-path: inset(0 0% 0 0); opacity: 0;}
+}
+
+.hotkey-btn.listening {
+    border-color: var(--accent-primary);
+    color: var(--accent-txt);
+    animation: hotkeyPulse 1s infinite alternate;
+}
+
+@keyframes hotkeyPulse {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
 }
 
 /* responsiveness yay ! */
@@ -1450,7 +1582,7 @@ dialog.paste-dialog[open] {
     .sidebar .header-btn-wrapper label,
     .sidebar .header-btn-wrapper button {justify-content: center;}
 
-    #themeSwitch {
+    #themeSwitch, #settingsBtn {
         width: 100%;
         justify-content: center;
         padding: var(--space-2) var(--space-4);
@@ -1459,6 +1591,13 @@ dialog.paste-dialog[open] {
 
     #themeSwitch::after {
         content: "Theme";
+        font-family: 'Epilogue', sans-serif;
+        font-size: var(--text-sm);
+        font-weight: 500;
+    }
+
+    #settingsBtn::after {
+        content: "Settings";
         font-family: 'Epilogue', sans-serif;
         font-size: var(--text-sm);
         font-weight: 500;
@@ -1486,7 +1625,8 @@ dialog.paste-dialog[open] {
     .sidebar .theme-overlay,
     .sidebar .export-overlay,
     .sidebar .meta-overlay,
-    .sidebar .import-overlay {
+    .sidebar .import-overlay,
+    .sidebar .settings-overlay {
         border: none;
         min-height: 500px;
         flex: 1;
@@ -1580,5 +1720,10 @@ dialog.paste-dialog[open] {
     dialog.about-modal[open],
     dialog.paste-dialog[open] {
         animation: slideUp 0.2s ease-out forwards;
+    }
+
+    .resume-scrolling-btn {
+        bottom: calc(80px + var(--space-6));
+        z-index: 101;
     }
 }

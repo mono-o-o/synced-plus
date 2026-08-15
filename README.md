@@ -2,7 +2,7 @@
 
 # <img src="src/img/synced-plus-logo-full.png" style="height: 3rem"></img>
 
-A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC creator. Simply import your audio and optional LRC/TXT and start syncing lyrics line-by-line and/or word-by-word.
+A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC creator. Import your audio and optional LRC/TXT/SRT and start syncing lyrics line-by-line or word-by-word.
 
 <br>
 
@@ -23,43 +23,54 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
 
 ## Features
 
-- ### <strong>Specifically for ELRC</strong>
+- ### **Specifically for ELRC**
   Designed to create Enhanced LRC, handling line-by-line, word-by-word timestamping.
 
-- ### <strong>Completely Offline</strong>
-  Works completely within your system, does not send any data to a server.
+- ### **Support for Other Formats**
+  Supports Standard LRC, Enhanced LRC, plain text, and SubRip subtitle files (SRT).
 
-- ### <strong>Interactive Waveform</strong>
-  Uses wavesurfer.js to draw a waveform that acts as the audio timeline. Uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
+- ### **Completely Offline**
+  Works completely within your system, does not send any data to a server. Uses localStorage to store draft and settings.
 
-- ### <strong>Smart File Import</strong>
-  Creating an LRC only requires you to import your audio file. However, you can also import your own ELRC/LRC, TXT, or paste from the clipboard (which automatically checks if input is lrc/plaintext) for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio to the LRC file.
+- ### **Interactive Waveform**
+  synced+ uses wavesurfer.js to draw a waveform that acts as the audio timeline. It also uses the hover and zoom plugins for more precise timestamping, and regions for visual representation of lyric lines.
 
-- ### <strong>Smart Time Field Setting</strong>
+- ### **Smart File Import**
+  Creating a lyric file only requires you to import your audio file. However, you can also import your own lyric file or paste from the clipboard (which automatically checks input format) for resuming progress or ease of use. Uses jsmediatags to automatically read and write the metadata tags of your audio to the LRC file.
+
+- ### **Smart Time Field Setting**
   Prevents time fields from being set to illegal values that will return errors by adjusting other fields accordingly.
 
-- ### <strong>Live Preview</strong>
-  Watch your ELRC file compile in realtime in a preview sidebar.
+- ### **Live Preview**
+  Watch your lyric file compile in realtime in a preview sidebar.
 
-- ### <strong>Themes !!!!</strong>
+- ### **Themes !!!!**
   Choose from a selection of colour palettes I totally don't use in my IDEs.
 
 <br>
 
+## Installation
+
+synced+ can be run as a website, desktop/mobile application, or run locally from source code.
+
+- ### **Web Version**
+  Head over to [synced+'s GitHub Pages site](https://mono-o-o.github.io/synced-plus/).
+
+- ### **Desktop / Mobile Application**
+  Head over to the [releases](https://github.com/mono-o-o/synced-plus/releases) page to download the latest Tauri app.
+
+- ### **Self-Hosted (requires [Node.js](https://nodejs.org/))**
+  Clone the repository, open a terminal in `/synced-plus-master/src/`, and run `npx serve .` to start a local server.
+
 ## How to Use
 
-1. <strong>Load Audio</strong>: Click on the <strong>Open Audio</strong> button to load a track. Metadata input fields will automatically be filled if your audio files have them.
-2. <strong>Load Lyrics / Add Lines</strong>: Click on the <strong>Open LRC/TXT</strong> button to load an existing ELRC/LRC or TXT file.
+1. **Load Audio**: Click on the **Open Audio** button to load a track. Metadata input fields will automatically be filled if your audio file has them.
 
-   If importing plaintext, synced+ will read per line and add a lyric line card in the main workspace for each.
+2. **Load Lyrics / Add Lines**: Click on the **Import** button to load a lyric file or paste from the clipboard.
 
-   Alternatively, you can opt not to import any text entirely and manually add each lyric line yourself.
+3. **Sync Lines / Words**: Use the timestamp button inside a time field to set its value to the current playback time.<br><br>To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking on the word jumps audio playback to its time.<br><br>By default, line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation. This can be changed in the settings.
 
-3. <strong>Sync Lines / Words</strong>: Use the timestamp button inside a time field to set its value to the current playback time. To sync words, click on the Expand button to see the word container. When a time has been set for a word, clicking the word jumps the audio playback to that time.
-
-   Line end timestamps create a new, empty line in the LRC file, a common practice in LRC creation.
-
-4. <strong>Export</strong>: Click on the <strong>Export</strong> button to choose your preferred format and download your .lrc file.
+4. **Export**: Click on the **Export** button to select your desired format and download it.
 
 <br>
 
@@ -94,6 +105,8 @@ A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC
        </tr>
    </tbody>
 </table>
+
+<p align="center">Note: Hotkeys can be customised in the settings panel.</p>
 
 <br>
 

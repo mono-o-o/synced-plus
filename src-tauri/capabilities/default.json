@@ -9,6 +9,7 @@
     "core:default",
     "fs:default",
     "dialog:default",
+    "opener:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

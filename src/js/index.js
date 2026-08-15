@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let loadedAudio = null;
+    let currTrackName = '';
+
+    const metaName = document.getElementById('trackTitle');
+    const metaArtist = document.getElementById('trackArtist');
+    const metaAlbum = document.getElementById('trackAlbum');
+    if (!loadedAudio) {metaName.value = ''; metaArtist.value = ''; metaAlbum.value = '';}
+
     const accentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary');
     const accentSecondary = getComputedStyle(document.documentElement).getPropertyValue('--accent-secondary');
     const accentSurface = getComputedStyle(document.documentElement).getPropertyValue('--accent-srf');
@@ -9,9 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const currTime = document.getElementById('currentTime');
     const duration = document.getElementById('duration');
 
-    let loadedAudio = null;
-    let currTrackName = '';
-
     const TIME_REGEX = /^(\d{2}):(\d{2})\.(\d{2,3})$/;
     const SRT_TIME_REGEX = /(\d{2}):(\d{2}):(\d{2})[,.](\d{3})/;
     const LINE_FORBIDDEN_CHARS_REGEX = /[<>]/g;
@@ -19,18 +24,221 @@ document.addEventListener('DOMContentLoaded', () => {
     const LINE_MATCH_REGEX = /^\[(\d{2}:\d{2}\.\d{2,3})](.*)$/;
     const WORD_SPLIT_REGEX = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
 
-    const CURRENT_VERSION = '1.2.1';
+    const CURRENT_VERSION = '1.3.0';
+
+    const DEFAULT_SETTINGS = {
+        seekStep: 1,
+        autoScroll: true,
+        regionLoop: false,
+        trailingTag: false,
+        theme: 'default',
+        hotkeys: {
+            playPause: 'Space',
+            rewind: 'ArrowLeft',
+            fastForward: 'ArrowRight',
+            slowDown: '<',
+            speedUp: '>'
+        }
+    }
+
+    let appSettings = {};
+    const loadSettings = () => {
+        const saved = localStorage.getItem('syncedplus:settings');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                appSettings = {
+                    ...DEFAULT_SETTINGS,
+                    ...parsed,
+                    hotkeys: {...DEFAULT_SETTINGS.hotkeys, ...(parsed.hotkeys || {})}
+                }
+            } catch (err) {
+                console.warn('failed to load settings, failling back: ', err);
+                appSettings = {...DEFAULT_SETTINGS};
+            }
+        } else {
+            appSettings = {...DEFAULT_SETTINGS};
+        }
+    }
+
+    const saveSettings = () => localStorage.setItem('syncedplus:settings', JSON.stringify(appSettings));
+    loadSettings();
+
+    const hotkeysModal = document.getElementById('hotkeysModal');
+    if (hotkeysModal) {
+        hotkeysModal.addEventListener('click', (e) => {
+            if (e.target === hotkeysModal) {
+                const rect = e.target.getBoundingClientRect();
+                if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) hotkeysModal.close();
+            }
+        })
+    }
+
+    const closeHotkeysBtn = document.getElementById('closeHotkeysBtn');
+    if (closeHotkeysBtn) closeHotkeysBtn.addEventListener('click', () => {if (hotkeysModal) hotkeysModal.close()});
+
+    const seekStepInput = document.getElementById('seekStep');
+    const seekStepDec = document.getElementById('seekStepDec');
+    const seekStepInc = document.getElementById('seekStepInc');
+
+    if (seekStepInput) {
+        seekStepInput.value = appSettings.seekStep;
+        const updSeekStep = (val) => {
+            let parsed = parseFloat(val);
+            if (isNaN(parsed) || parsed <= 0) parsed = 0.1;
+            parsed = Math.round(parsed * 100) / 100;
+            appSettings.seekStep = parsed;
+            seekStepInput.value = parsed;
+            saveSettings();
+            renderHotkeys();
+        }
+        seekStepInput.addEventListener('input', (e) => updSeekStep(e.target.value));
+        seekStepDec.addEventListener('click', () => updSeekStep(appSettings.seekStep - 1 > 0 ? appSettings.seekStep - 1 : 0.1));
+        seekStepInc.addEventListener('click', () => updSeekStep(appSettings.seekStep + 1));
+    }
+
+    const resetHotkeysBtn = document.getElementById('resetHotkeysBtn');
+    if (resetHotkeysBtn) {
+        resetHotkeysBtn.addEventListener('click', () => {
+            appSettings.hotkeys = {...DEFAULT_SETTINGS.hotkeys};
+            saveSettings();
+            renderHotkeys();
+        })
+    }
+
+    const renderHotkeys = () => {
+        const settingsTable = document.getElementById('hotkeysTable');
+        const aboutTable = document.querySelector('#about-hotkeys table');
+        const hotkeyLabels = {
+            playPause: 'Play/Pause',
+            rewind: 'Rewind',
+            fastForward: 'Fast Forward',
+            slowDown: 'Slow Down (-0.25x)',
+            speedUp: 'Speed Up (+0.25x)',
+        }
+        const formatKey = (key) => key === ' ' ? 'Space' : key;
+
+        if (settingsTable) {
+            settingsTable.innerHTML = '';
+            Object.keys(appSettings.hotkeys).forEach(k => {
+                const tr = document.createElement('tr');
+                const labelTd = document.createElement('td');
+                labelTd.textContent = hotkeyLabels[k];
+                const valTd = document.createElement('td');
+                const btn = document.createElement('button');
+                btn.className = 'hotkey-btn';
+                btn.textContent = formatKey(appSettings.hotkeys[k]);
+
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    btn.textContent = 'Press any key...';
+                    btn.classList.add('listening');
+                    const controller = new AbortController();
+                    const cleanup = () => {
+                        controller.abort();
+                        renderHotkeys();
+                    }
+
+                    document.addEventListener('keydown', (event) => {
+                        event.preventDefault();
+                        if (['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) return;
+                        let combo = [];
+                        if (event.ctrlKey) combo.push('Ctrl');
+                        if (event.altKey) combo.push('Alt');
+                        if (event.metaKey) combo.push('Meta');
+                        if (event.shiftKey && (combo.length > 0 || event.key.length > 1)) combo.push('Shift');
+                        let mainKey = event.code === 'Space' ? 'Space' : (event.key.length === 1 ? event.key.toUpperCase() : event.key);
+                        combo.push(mainKey);
+                        appSettings.hotkeys[k] = combo.join(' + ');
+                        saveSettings();
+                        cleanup();
+                    },{signal: controller.signal});
+
+                    document.addEventListener('click', (event) => {
+                        if (event.target !== btn) cleanup();
+                    }, {signal: controller.signal});
+                })
+                valTd.appendChild(btn);
+                tr.appendChild(labelTd);
+                tr.appendChild(valTd);
+                settingsTable.appendChild(tr);
+            })
+        }
+        if (aboutTable) {
+            aboutTable.innerHTML = `
+                <tr><td>${formatKey(appSettings.hotkeys.playPause)}</td><td>Play/Pause</td></tr>
+                <tr><td>${formatKey(appSettings.hotkeys.rewind)}<br>${formatKey(appSettings.hotkeys.fastForward)}</td><td>Jump ${appSettings.seekStep}s backward/forward</td></tr>
+                <tr><td>Ctrl + Z</td><td>Undo</td></tr>
+                <tr><td>Ctrl + Shift + Z<br>Ctrl + Y</td><td>Redo</td></tr>
+                <tr><td>${formatKey(appSettings.hotkeys.slowDown)}</td><td>Slow Down -0.25x</td></tr>
+                <tr><td>${formatKey(appSettings.hotkeys.speedUp)}</td><td>Speed Up +0.25x</td></tr>
+            `;
+        }
+    }
+
+    renderHotkeys();
+
+    const autoScrollToggle = document.getElementById('autoScrollToggle');
+    const autoScrollToggleCard = document.getElementById('autoScrollToggleCard');
+    if (autoScrollToggle) {
+        autoScrollToggle.checked = appSettings.autoScroll;
+        autoScrollToggle.addEventListener('change', (e) => {
+            appSettings.autoScroll = e.target.checked;
+            saveSettings();
+            if (!appSettings.autoScroll) autoScrollSuspended = false;
+            if (resumeScrollingBtn) resumeScrollingBtn.classList.remove('is-visible');
+        })
+    }
+    if (autoScrollToggleCard && autoScrollToggle) {
+        autoScrollToggleCard.addEventListener('click', (e) => {
+            if (e.target !== autoScrollToggle) {
+                autoScrollToggle.checked = !autoScrollToggle.checked;
+                autoScrollToggle.dispatchEvent(new Event('change'));
+            }
+        })
+    }
+
+    let autoScrollSuspended = false;
+    const resumeScrollingBtn = document.getElementById('resumeScrollingBtn');
+    const mainWorkspace = document.querySelector('.main-workspace');
+
+    const suspendAutoScroll = () => {
+        if (appSettings.autoScroll && !autoScrollSuspended) {
+            autoScrollSuspended = true;
+            if (resumeScrollingBtn && lineArray.length !== 0) resumeScrollingBtn.classList.add('is-visible');
+        }
+    }
+
+    if (mainWorkspace) {
+        mainWorkspace.addEventListener('wheel', suspendAutoScroll, {passive: true});
+        mainWorkspace.addEventListener('touchmove', suspendAutoScroll, {passive: true});
+        mainWorkspace.addEventListener('mousedown', (e) => {if (e.offsetX > mainWorkspace.clientWidth - 20) suspendAutoScroll()});
+    }
+
+    if (resumeScrollingBtn) {
+        resumeScrollingBtn.addEventListener('click', () => {
+            autoScrollSuspended = false;
+            resumeScrollingBtn.classList.remove('is-visible');
+            if (activeLineEl) activeLineEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+        })
+    }
 
     window.openExtLink = async function(url) {
         if (window.__TAURI_INTERNALS__?.invoke) {
             try {
                 await window.__TAURI_INTERNALS__.invoke('plugin:opener|open_url', { url: url });
             } catch (err) {
-                console.error('Tauri opener failed, falling back:', err);
-                window.open(url, '_blank');
+                console.error('Tauri opener failed, falling back to new tab:', err);
             }
-        } else window.open(url, '_blank');
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
+
+    const githubBtn = document.getElementById('githubBtn');
+    if (githubBtn) githubBtn.addEventListener('click', () => window.openExtLink('https://github.com/mono-o-o/synced-plus'));
+
+    const creditLink = document.querySelectorAll('.credit-link');
+    if (creditLink) creditLink.forEach(l => l.addEventListener('click', (e) => window.openExtLink(l.dataset.url)))
 
     const formatTime = (seconds, precision = 3) => {
         if (isNaN(seconds)) return precision === 3 ? '00:00.000' : '00:00.00';
@@ -208,6 +416,39 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     });
 
+    const loopToggle = document.getElementById('loopToggle');
+    const loopToggleCard = document.getElementById('loopToggleCard');
+    let activeLoopRegion = null;
+
+    if (loopToggle) {
+        loopToggle.checked = appSettings.regionLoop;
+        loopToggle.addEventListener('change', (e) => {
+            appSettings.regionLoop = e.target.checked;
+            saveSettings();
+            activeLoopRegion = null;
+        })
+    }
+
+    if (loopToggleCard && loopToggle) {
+        loopToggleCard.addEventListener('click', (e) => {
+            if (e.target !== loopToggle) {
+                loopToggle.checked = !loopToggle.checked;
+                loopToggle.dispatchEvent(new Event('change'));
+            }
+        })
+    }
+
+    wsRegions.on('region-clicked', (r, e) => {
+        if (!appSettings.regionLoop) return;
+        e.stopPropagation();
+        activeLoopRegion = r.id;
+        r.play();
+    })
+
+    wsRegions.on('region-out', (r) => {
+        if (appSettings.regionLoop && activeLoopRegion === r.id) r.play();
+    })
+
     document.querySelectorAll('.about-tab').forEach(t => {
         t.addEventListener('click', (e) => {
             document.querySelectorAll('.about-tab').forEach(t => t.classList.remove('active'));
@@ -232,6 +473,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const copyNotif = btn.querySelector('.copied-text');
         copyNotif.classList.add('show-copied');
         setTimeout(() => copyNotif.classList.remove('show-copied'), 1000);
+    }
+
+    const copyDiscordBtn = document.getElementById('copyDiscordBtn');
+    if (copyDiscordBtn) {
+        copyDiscordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const txt = copyDiscordBtn.dataset.copytxt;
+            copyToClipboard(this, txt);
+        })
     }
 
     const compressLines = (lines) => {return lines.map(l => [l.start, l.end, l.text, l.words.map(w => w.time)])}
@@ -815,7 +1065,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addLineBtn.removeAttribute('title');
         importBtn.classList.remove('disabled');
         importBtn.removeAttribute('title');
+        exportBtn.classList.remove('disabled');
+        exportBtn.removeAttribute('title');
         updatePreview();
+
+        const volSlider = document.getElementById('volume');
+        if (volSlider) wavesurfer.setVolume(parseFloat(volSlider.value));
 
         if (!hoverPlugin) {
             hoverPlugin = wavesurfer.registerPlugin(
@@ -894,6 +1149,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeWordEl.forEach(el => el.classList.remove('active-word', 'active-word-card', 'active-preview-word'));
                 activeWordEl = [];
                 lastActiveLineId = activeLine ? activeLine.id : null;
+
+                if (activeLine) {
+                    const newLineCard = document.querySelector(`.line-card[data-id="${activeLine.id}"]`);
+                    if (newLineCard) {
+                        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+                        const isTyping = activeTag === 'input' || activeTag === 'textarea';
+                        if (appSettings.autoScroll && !autoScrollSuspended && !isTyping) {newLineCard.scrollIntoView({behavior: 'smooth', block: 'center'});}
+                    }
+                }
             }
 
             if (!activeLine) return;
@@ -950,14 +1214,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const playPauseBtn = document.getElementById('playPauseBtn');
-    playPauseBtn.addEventListener('click', () => {wavesurfer.playPause();})
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', () => {
+            if (!loadedAudio) return;
+            wavesurfer.playPause();
+        })
+    }
     wavesurfer.on('play', () => {playPauseBtn.classList.add('playing');})
     wavesurfer.on('pause', () => {playPauseBtn.classList.remove('playing');})
 
     const rewindBtn = document.getElementById('rewindBtn');
     const fastFwdBtn = document.getElementById('fastForwardBtn');
-    rewindBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() - 1));});
-    fastFwdBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() + 1))});
+    rewindBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() - appSettings.seekStep))});
+    fastFwdBtn.addEventListener('click', () => {if (wavesurfer.decodedData) wavesurfer.setTime(Math.max(0, wavesurfer.getCurrentTime() + appSettings.seekStep))});
 
     const slowDownBtn = document.getElementById('slowDownBtn');
     const speedUpBtn = document.getElementById('speedUpBtn');
@@ -980,24 +1249,42 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         const activeInput = document.activeElement.tagName.toLowerCase();
         if (activeInput === 'input' || activeInput === 'textarea') return;
-        if (e.code === 'Space') {
+
+        if (['PageUp', 'PageDown', 'ArrowUp', 'ArrowDown'].includes(e.key)) suspendAutoScroll();
+
+        let combo = [];
+        if (e.ctrlKey) combo.push('Ctrl');
+        if (e.altKey) combo.push('Alt');
+        if (e.metaKey) combo.push('Meta');
+        if (e.shiftKey && (combo.length > 0 || e.key.length > 1)) combo.push('Shift');
+
+        let mainKey = e.code === 'Space' ? 'Space' : (e.key.length === 1 ? e.key.toUpperCase() : e.key);
+        if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) combo.push(mainKey);
+        const pressedKey = combo.join(' + ');
+
+        if (pressedKey === appSettings.hotkeys.playPause) {
             e.preventDefault();
             document.getElementById('playPauseBtn').click();
+        } else if (pressedKey === appSettings.hotkeys.rewind) {
+            e.preventDefault();
+            document.getElementById('rewindBtn').click();
+        } else if (pressedKey === appSettings.hotkeys.fastForward) {
+            e.preventDefault();
+            document.getElementById('fastForwardBtn').click();
+        } else if (pressedKey === appSettings.hotkeys.slowDown) {
+            e.preventDefault();
+            document.getElementById('slowDownBtn').click();
+        } else if (pressedKey === appSettings.hotkeys.speedUp) {
+            e.preventDefault();
+            document.getElementById('speedUpBtn').click();
         }
-
-        if (e.code === 'ArrowLeft') document.getElementById('rewindBtn').click();
-        if (e.code === 'ArrowRight') document.getElementById('fastForwardBtn').click();
-
-        if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') || (e.ctrlKey && e.key.toLowerCase() === 'y')) {
+        else if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') || (e.ctrlKey && e.key.toLowerCase() === 'y')) {
             e.preventDefault();
             redo();
         } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
             e.preventDefault();
             undo();
         }
-
-        if (e.key === '<') document.getElementById('slowDownBtn').click();
-        if (e.key === '>') document.getElementById('speedUpBtn').click();
     });
 
     const updSliderFill = (el, val) => {
@@ -1039,7 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updSliderFill(volumeSlider, savedVol);
         }
     });
-    
+
     const addLineBtn = document.getElementById('addLineBtn');
     addLineBtn.disabled = true;
     addLineBtn.title = "Please open an audio file first!";
@@ -1093,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                if (useTrailingEndTag && type === 'enhanced' && l.end && l.end > l.start) {
+                if (appSettings.trailingTag && type === 'enhanced' && l.end && l.end > l.start) {
                     if (forPreview) lineStr += `<span style="color: var(--accent-muted);" title="line end indicator">&lt;${endStr}&gt;</span>`;
                     else lineStr += `<${endStr}>`;
                 }
@@ -1104,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else elrc += `[${startStr}]${l.text}\n`;
             }
 
-            if (!useTrailingEndTag && l.end && l.end > l.start) {
+            if (!appSettings.trailingTag && l.end && l.end > l.start) {
                 if (forPreview) elrc += `<span style="color: var(--accent-muted);" title="line end indicator">[${endStr}]</span>\n`;
                 else elrc += `[${endStr}]\n`;
             }
@@ -1141,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('input', (e) => {
         if (!e.target || typeof e.target.closest !== 'function') return;
-        if (e.target.closest('#lines') || e.target.closest('.track-info')) updatePreview();
+        if (e.target.closest('#lines') || e.target.closest('.track-info' || e.target.closest('.meta-overlay') || e.target.closest('.settings-overlay'))) updatePreview();
     })
 
     const saveFile = async (lyricData, filename, ext = 'lrc') => {
@@ -1203,11 +1490,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 backgroundColor: getComputedStyle(root).getPropertyValue('--accent-srf'),
                 cursorColor: getComputedStyle(root).getPropertyValue('--accent-txt')
             });
-            try {
-                localStorage.setItem('syncedplus:theme', theme.id);
-            } catch (err) {
-                console.warn('failed to save theme: ', err);
-            }
+            appSettings.theme = theme.id;
+            saveSettings();
         }
 
         if (document.startViewTransition) document.startViewTransition(update);
@@ -1241,6 +1525,11 @@ document.addEventListener('DOMContentLoaded', () => {
             el: document.querySelector('.meta-overlay'),
             title: 'Metadata',
             icon: getIcon('.track-info-header')
+        },
+        settings: {
+            el: document.querySelector('.settings-overlay'),
+            title: 'Settings',
+            icon: getIcon('#settingsBtn')
         }
     }
 
@@ -1264,18 +1553,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('themeSwitch').addEventListener('click', () => togglePanel('theme'));
-    document.getElementById('exportELRC').addEventListener('click', () => togglePanel('export'));
+    const exportBtn = document.getElementById('exportELRC');
+    exportBtn.classList.add('disabled');
+    exportBtn.title = "Please open an audio file first!";
+    exportBtn.addEventListener('click', (e) => {
+        if (e.currentTarget.classList.contains('disabled')) return;
+        togglePanel('export');
+    });
     document.getElementById('metaBtn').addEventListener('click', () => togglePanel('meta'));
+    document.getElementById('settingsBtn').addEventListener('click', () => togglePanel('settings'));
 
-    let useTrailingEndTag = localStorage.getItem('syncedplus:trailingTag') === 'true';
     const lineEndToggle = document.getElementById('lineEndToggle');
     const lineEndToggleCard = document.getElementById('lineEndToggleCard');
 
     if (lineEndToggle) {
-        lineEndToggle.checked = useTrailingEndTag;
+        lineEndToggle.checked = appSettings.trailingTag;
         lineEndToggle.addEventListener('change', (e) => {
-            useTrailingEndTag = e.target.checked;
-            localStorage.setItem('syncedplus:trailingTag', useTrailingEndTag);
+            appSettings.trailingTag = e.target.checked;
+            saveSettings();
             updatePreview();
         });
     }
@@ -1290,7 +1585,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const exportHandler = async (type) => {
-        if (!loadedAudio) {await customAlert("Please load an audio file first!"); return;}
         if (lineArray.length === 0) {await customAlert("Empty workspace. Add at least one lyric line first before exporting."); return;}
 
         let data = '';
@@ -1333,9 +1627,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 themeOverlay.appendChild(card);
             });
-            const savedThemeId = localStorage.getItem('syncedplus:theme');
-            if (savedThemeId) {
-                const found = themes.find(t => t.id === savedThemeId);
+            if (appSettings.theme) {
+                const found = themes.find(t => t.id === appSettings.theme);
                 if (found) applyTheme(found);
             }
         })
@@ -1350,7 +1643,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetInput = document.getElementById('offset');
         lineArray = [];
 
-        if (format === 'srt') {
+        const isSRT = lines.some(l => SRT_TIME_REGEX.test(l));
+        const isLRC = lines.some(l => LINE_MATCH_REGEX.test(l.trim()) || METADATA_REGEX.test(l.trim()));
+        const isRawText = !isSRT && !isLRC;
+
+        if (isSRT) {
             const blocks = text.trim().split(/\r?\n\r?\n/);
             blocks.forEach(b => {
                 const blockLines = b.split(/\r?\n/);
@@ -1372,77 +1669,73 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             })
+        } else if (isRawText) {
+            let lastTime = 0;
+            lines.forEach(l => {
+                const trimmed = l.trim();
+                if (!trimmed) return;
+                const newLine = createNewLine(lastTime);
+                newLine.text = trimmed;
+                newLine.words = trimmed.split(/\s+/).map(w => ({id: crypto.randomUUID(), time: null, text: w}));
+                lineArray.push(newLine);
+            })
         } else {
-            let isRawText = format === 'txt';
-            if (format === 'paste') isRawText = !text.match(/\[\d{2}:\d{2}\.\d{2,3}\]/);
-            if (isRawText) {
-                let lastTime = 0;
-                lines.forEach(l => {
-                    const trimmed = l.trim();
-                    if (!trimmed) return;
-                    const newLine = createNewLine(lastTime);
-                    newLine.text = trimmed;
-                    newLine.words = trimmed.split(/\s+/).map(w => ({id: crypto.randomUUID(), time: null, text: w}));
-                    lineArray.push(newLine);
-                })
-            } else {
-                lines.forEach(l => {
-                    l = l.trim();
-                    if (!l) return;
+            lines.forEach(l => {
+                l = l.trim();
+                if (!l) return;
 
-                    const metaMatch = l.match(METADATA_REGEX);
-                    if (metaMatch) {
-                        if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
-                        if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
-                        if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
-                        if (metaMatch[1] === 'by') byInput.value = metaMatch[2];
-                        if (metaMatch[1] === 'offset') offsetInput.value = metaMatch[2];
-                        titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+                const metaMatch = l.match(METADATA_REGEX);
+                if (metaMatch) {
+                    if (metaMatch[1] === 'ti') titleInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'ar') artistInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'al') albumInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'by') byInput.value = metaMatch[2];
+                    if (metaMatch[1] === 'offset') offsetInput.value = metaMatch[2];
+                    titleInput.dispatchEvent(new Event('input', {bubbles:true}));
+                    return;
+                }
+
+                const lineMatch = l.match(LINE_MATCH_REGEX);
+                if (lineMatch) {
+                    const lineTime = parseTime(lineMatch[1]);
+                    let content = lineMatch[2];
+
+                    if (content.trim() === '') {
+                        if (lineArray.length > 0) {
+                            const lastLine = lineArray[lineArray.length-1];
+                            if (!lastLine.end || lastLine.end <= lastLine.start) {
+                                lastLine.end = lineTime;
+                                return;
+                            }
+                        }
+
+                        lineArray.push(createNewLine(lineTime));
                         return;
                     }
 
-                    const lineMatch = l.match(LINE_MATCH_REGEX);
-                    if (lineMatch) {
-                        const lineTime = parseTime(lineMatch[1]);
-                        let content = lineMatch[2];
+                    const newLine = createNewLine(lineTime);
+                    WORD_SPLIT_REGEX.lastIndex = 0;
+                    let wordMatch;
 
-                        if (content.trim() === '') {
-                            if (lineArray.length > 0) {
-                                const lastLine = lineArray[lineArray.length-1];
-                                if (!lastLine.end || lastLine.end <= lastLine.start) {
-                                    lastLine.end = lineTime;
-                                    return;
-                                }
-                            }
-
-                            lineArray.push(createNewLine(lineTime));
-                            return;
-                        }
-
-                        const newLine = createNewLine(lineTime);
-                        WORD_SPLIT_REGEX.lastIndex = 0;
-                        let wordMatch;
-
-                        if (content.includes('<') && content.includes('>')) {
-                            while ((wordMatch = WORD_SPLIT_REGEX.exec(content)) !== null) newLine.words.push({id: crypto.randomUUID(), time: parseTime(wordMatch[1]), text: wordMatch[2].trim()});
-                            if (newLine.words.length > 0) {
-                                const lastWord = newLine.words[newLine.words.length - 1];
-                                if (lastWord.text === '') {
-                                    newLine.end = lastWord.time;
-                                    newLine.words.pop();
-                                }
+                    if (content.includes('<') && content.includes('>')) {
+                        while ((wordMatch = WORD_SPLIT_REGEX.exec(content)) !== null) newLine.words.push({id: crypto.randomUUID(), time: parseTime(wordMatch[1]), text: wordMatch[2].trim()});
+                        if (newLine.words.length > 0) {
+                            const lastWord = newLine.words[newLine.words.length - 1];
+                            if (lastWord.text === '') {
+                                newLine.end = lastWord.time;
+                                newLine.words.pop();
                             }
                         }
-
-                        if (newLine.words.length > 0) newLine.text = newLine.words.map(w => w.text).join(' ');
-                        else {
-                            newLine.text = content;
-                            newLine.words = content.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: null, text: word}));
-                        }
-                        lineArray.push(newLine);
                     }
-                })
-            }
+
+                    if (newLine.words.length > 0) newLine.text = newLine.words.map(w => w.text).join(' ');
+                    else {
+                        newLine.text = content;
+                        newLine.words = content.split(/\s+/).map(word => ({id: crypto.randomUUID(), time: null, text: word}));
+                    }
+                    lineArray.push(newLine);
+                }
+            })
         }
 
         currentPlaybackIndex = -1;
@@ -1519,7 +1812,8 @@ document.addEventListener('DOMContentLoaded', () => {
             '.theme-overlay',
             '.import-overlay',
             '.export-overlay',
-            '.meta-overlay'
+            '.meta-overlay',
+            '.settings-overlay'
         ]
         const nodes = panels.map(p => document.querySelector(p));
         const placeholders = nodes.map((n, i) => {
