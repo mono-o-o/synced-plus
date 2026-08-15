@@ -888,7 +888,7 @@ header button {
     transition: color var(--transition-fast);
 }
 
-.theme-overlay, .export-overlay, .meta-overlay, .import-overlay, .settings-overlay {
+.theme-overlay, .export-overlay, .meta-overlay, .import-overlay, .settings-overlay, .view-overlay {
     grid-row: 3;
     grid-column: 2;
     background-color: var(--accent-srf);
@@ -914,7 +914,14 @@ header button {
 
 .meta-overlay .info-field, .settings-overlay .info-field {flex: none;}
 
-.theme-overlay.is-active, .export-overlay.is-active, .meta-overlay.is-active, .import-overlay.is-active, .settings-overlay.is-active {display: flex;}
+.theme-overlay.is-active,
+.export-overlay.is-active,
+.meta-overlay.is-active,
+.import-overlay.is-active,
+.settings-overlay.is-active,
+.view-overlay.is-active {
+    display: flex;
+}
 
 .theme-card {
     display: flex;

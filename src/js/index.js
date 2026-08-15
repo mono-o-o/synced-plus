@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regionLoop: false,
         trailingTag: false,
         theme: 'default',
+        previewFormat: 'enhanced',
         hotkeys: {
             playPause: 'Space',
             rewind: 'ArrowLeft',
@@ -1169,10 +1170,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const wordCards = lineCard.querySelectorAll('.word-card');
             const dispSpans = lineCard.querySelectorAll('.lyric-display span');
             const prevLineSpan = document.getElementById(`prev-l${activeIndex}`);
+            const format = appSettings.previewFormat || 'enhanced';
 
-            if ((prevLineSpan && activeLine.words.length === 0) && !prevLineSpan.classList.contains('active-preview-word')) {
-                prevLineSpan.classList.add('active-preview-word');
-                activeWordEl.push(prevLineSpan);
+            if (prevLineSpan && (format !== 'enhanced' || activeLine.words.length === 0)) {
+                if (!prevLineSpan.classList.contains('active-preview-word')) {
+                    prevLineSpan.classList.add('active-preview-word');
+                    activeWordEl.push(prevLineSpan);
+                }
             }
 
             let hasWordTime = activeLine.words.some(w => w.time !== null && w.time !== '');
@@ -1192,8 +1196,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const elements = [
                     {el: wordCards[index], cls: 'active-word-card', track: true},
                     {el: dispSpans[index], cls: 'active-word', track: true},
-                    {el: document.getElementById(`prev-l${activeIndex}-w${index}`), cls: 'active-preview-word', track: true}
                 ]
+
+                if (format === 'enhanced') elements.push({el: document.getElementById(`prev-l${activeIndex}-w${index}`), cls: 'active-preview-word', track: true})
 
                 elements.forEach(({ el, cls }) => {
                     if (!el) return;
@@ -1368,7 +1373,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const startStr = formatTime(l.start, 2);
             const endStr = formatTime(l.end, 2);
 
-            if (l.words.length > 0) {
+            if (forPreview && type === 'standard') {
+                let lineText = l.words.length > 0 ? l.words.map(w => w.text).join(' ') : l.text;
+                elrc += `<span id="prev-l${i}">[${startStr}]${lineText}</span>`
+            } else if (l.words.length > 0) {
                 let lineStr = `[${startStr}]`;
                 l.words.forEach((w, j) => {
                     let time = w.time !== null && w.time !== '' ? formatTime(w.time) : '';
@@ -1399,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return elrc;
     }
 
-    const generateSRT = () => {
+    const generateSRT = (forPreview = false) => {
         let srt = '';
         let seq = 1;
 
@@ -1411,9 +1419,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const formattedText = l.text.replace(/\\n/g, '\n');
-            srt += `${seq}\n`;
-            srt += `${formatSRTTime(start)} --> ${formatSRTTime(end)}\n`;
-            srt += `${formattedText}\n\n`;
+            if (forPreview) srt += `<span id="prev-l${i}">${seq}\n${formatSRTTime(start)} --> ${formatSRTTime(end)}\n${formattedText}</span>\n\n`;
+            else srt += `${seq}\n${formatSRTTime(start)} --> ${formatSRTTime(end)}\n${formattedText}\n\n`;
             seq++;
         })
 
@@ -1421,7 +1428,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const updatePreview = () => {
-        previewContainer.innerHTML = generateELRC(true);
+        if (appSettings.previewFormat === 'srt') previewContainer.innerHTML = generateSRT(true);
+        else previewContainer.innerHTML = generateELRC(true, appSettings.previewFormat);
         lastActiveLineId = null;
         if (wavesurfer) wavesurfer.emit('timeupdate', wavesurfer.getCurrentTime());
     }
@@ -1477,8 +1485,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewHeaderText = previewHeader.querySelector('p');
     const previewHeaderIcon = previewHeader.querySelector('svg');
 
-    const originalHeaderText = previewHeaderText.textContent;
+    let originalHeaderText = previewHeaderText.textContent;
     const originalHeaderIcon = previewHeaderIcon.innerHTML;
+
+    let activePanel = null;
+
+    const updatePreviewTitle = () => {
+        const formatNames = {
+            'standard': 'LRC Preview',
+            'enhanced': 'ELRC Preview',
+            'srt': 'SRT Preview'
+        }
+        originalHeaderText = formatNames[appSettings.previewFormat] || 'ELRC Preview';
+        if (!activePanel) previewHeaderText.textContent = originalHeaderText;
+    }
+    updatePreviewTitle();
 
     const applyTheme = (theme) => {
         const update = () => {
@@ -1530,10 +1551,13 @@ document.addEventListener('DOMContentLoaded', () => {
             el: document.querySelector('.settings-overlay'),
             title: 'Settings',
             icon: getIcon('#settingsBtn')
+        },
+        view: {
+            el: document.querySelector('.view-overlay'),
+            title: 'Switch View',
+            icon: '<path d="M12.075 15.475q-.725.025-1.387-.237t-1.163-.763t-.763-1.125t-.262-1.325q0-.25.025-.487t.1-.463q.1-.3-.012-.6t-.388-.425q-.3-.125-.587 0t-.388.425q-.125.375-.187.75T7 12q0 1 .388 1.913t1.087 1.612q.675.7 1.588 1.075t1.887.4l-.425.425q-.225.225-.225.525t.225.525t.525.225t.525-.225l1.6-1.6q.3-.3.3-.7t-.3-.7l-1.6-1.6q-.225-.225-.525-.225t-.525.225t-.225.525t.225.525zM11.9 8.5q.725 0 1.4.263t1.175.762t.763 1.125t.262 1.325q0 .25-.025.487t-.1.463q-.1.3.013.612t.387.438q.3.125.588 0t.387-.425q.125-.375.188-.763T17 12q0-1-.363-1.912T15.55 8.45q-.7-.7-1.612-1.062t-1.888-.363l.45-.45q.2-.225.2-.525t-.225-.525t-.525-.225t-.525.225l-1.6 1.6q-.3.3-.3.7t.3.7l1.6 1.6q.225.225.525.225t.525-.225t.225-.525t-.225-.525zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" style="fill: var(--accent-primary);"></path>'
         }
     }
-
-    let activePanel = null;
 
     const togglePanel = (p) => {
         Object.values(panels).forEach(p => p.el.classList.remove('is-active'));
@@ -1562,6 +1586,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('metaBtn').addEventListener('click', () => togglePanel('meta'));
     document.getElementById('settingsBtn').addEventListener('click', () => togglePanel('settings'));
+    document.getElementById('previewFormatBtn').addEventListener('click', () => togglePanel('view'));
+    document.querySelectorAll('.view-select-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            appSettings.previewFormat = e.currentTarget.dataset.view;
+            saveSettings();
+            updatePreviewTitle();
+            updatePreview();
+            togglePanel(null);
+        })
+    })
 
     const lineEndToggle = document.getElementById('lineEndToggle');
     const lineEndToggleCard = document.getElementById('lineEndToggleCard');
@@ -1813,7 +1847,8 @@ document.addEventListener('DOMContentLoaded', () => {
             '.import-overlay',
             '.export-overlay',
             '.meta-overlay',
-            '.settings-overlay'
+            '.settings-overlay',
+            '.view-overlay'
         ]
         const nodes = panels.map(p => document.querySelector(p));
         const placeholders = nodes.map((n, i) => {
