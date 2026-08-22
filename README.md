@@ -57,7 +57,7 @@ synced+ can be run as a website, desktop/mobile application, or run locally from
   Head over to [synced+'s GitHub Pages site](https://mono-o-o.github.io/synced-plus/).
 
 - ### **Desktop / Mobile Application**
-  Head over to the [releases](https://github.com/mono-o-o/synced-plus/releases) page to download the latest Tauri app.
+  Head over to the [releases](https://github.com/mono-o-o/synced-plus/releases) page to download the latest Tauri-based app.
 
 - ### **Self-Hosted (requires [Node.js](https://nodejs.org/))**
   Clone the repository, open a terminal in `/synced-plus-master/src/`, and run `npx serve .` to start a local server.
