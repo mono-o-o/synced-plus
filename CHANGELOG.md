@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use what I learned from Dart (transition to OOP)
 - Moved global offset and end line toggles into the settings panel
 - Moved help & about into the settings panel
 - Unified localStorage settings
