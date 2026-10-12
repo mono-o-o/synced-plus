@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const CURRENT_VERSION = '1.3.1';
     let loadedAudio = null;
     let currTrackName = '';
 
@@ -23,8 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const METADATA_REGEX = /^\[(ti|ar|al|by|offset):(.*?)]$/;
     const LINE_MATCH_REGEX = /^\[(\d{2}:\d{2}\.\d{2,3})](.*)$/;
     const WORD_SPLIT_REGEX = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
-
-    const CURRENT_VERSION = '1.3.0';
 
     class SettingsManager {
         constructor() {
@@ -1174,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     importAudioBtn.addEventListener('click', async () => {
         if (lineArray.length > 0 && !await customConfirm("Workspace is not empty. Overwrite?")) return;
-        const isAndroid = navigator.userAgent.toLowerCase().includes('android');
+        const isAndroid = /android/i.test(navigator.userAgent);
         if (window.__TAURI_INTERNALS__ && !isAndroid) {
             try {
                 const filePath = await window.__TAURI_INTERNALS__.invoke('plugin:dialog|open', {
@@ -1557,15 +1556,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                if (filePath) {
-                    await window.__TAURI_INTERNALS__.invoke('plugin:fs|write_text_file', {
-                        path: filePath,
-                        data: lyricData
-                    });
-                    await customAlert("Downloading now!");
-                }
+                if (!filePath) return;
+                const isContentUri = typeof filePath === 'string' && filePath.startsWith('content://');
+                const tauriInvoke = isContentUri ? 'write_content_uri' : 'plugin:fs|write_text_file';
+                const payload = isContentUri ? {uri: filePath, data: lyricData} : {path: filePath, data: lyricData};
+                await window.__TAURI_INTERNALS__.invoke(tauriInvoke, payload);
+                await customAlert('File saved!');
             } catch (err) {
-                console.error("Downloading failed: ", err);
+                console.error("Download failed: ", err);
+                await customAlert('Download failed: ' + err.message)
             }
         } else {
             try {
