@@ -13,4 +13,6 @@ src-tauri/gen/
 .env
 .env*.local
 qodana.yaml
-synced-plus-universal.apk
+*.apk
+*.apk.idsig
+my-release-key.keystore
