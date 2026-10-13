@@ -18,7 +18,7 @@
         "minHeight": 720,
         "center": true,
         "resizable": true,
-        "fullscreen": true,
+        "fullscreen": false,
         "theme": "Dark"
       }
     ],
@@ -27,7 +27,7 @@
         "enable": true,
         "scope": ["**"]
       },
-      "csp": "default-src 'self'; connect-src 'self' https://api.github.com blob: asset: https://tauri.localhost http://asset.localhost http://ipc.localhost https://ipc.localhost; media-src 'self' blob: asset: https://tauri.localhost http://asset.localhost; style-src 'self' 'unsafe-inline';"
+      "csp": "default-src 'self'; connect-src 'self' https://api.github.com blob: asset: https://tauri.localhost http://asset.localhost http://ipc.localhost https://ipc.localhost; media-src 'self' blob: asset: https://tauri.localhost http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' asset: https://tauri.localhost http://asset.localhost http://tauri.localhost data:;"
     }
   },
   "bundle": {

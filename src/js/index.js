@@ -1618,7 +1618,8 @@ document.addEventListener('DOMContentLoaded', () => {
             appSettings.theme = theme.id;
         }
 
-        if (document.startViewTransition) document.startViewTransition(update);
+        const isLinux = navigator.userAgent.includes('Linux');
+        if (document.startViewTransition && !isLinux) document.startViewTransition(update);
         else update();
     }
 
