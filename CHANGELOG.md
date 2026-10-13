@@ -5,7 +5,16 @@ All notable changes to synced+ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.1] - 2026-10-13
+
+### Fixed
+
+- Exported file on Android shouldn't be empty now (#5)
+- Removed startViewTransition for Linux, should now launch
+
+### Changed
+
+- Removed obsolete JS functions
 
 ## [1.3.0] - 2026-08-22
 
