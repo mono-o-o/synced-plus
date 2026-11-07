@@ -4,6 +4,8 @@
 
 A minimal, completely local, cross-platform, and browser-compatible Enhanced LRC creator. Import your audio and optional LRC/TXT/SRT and start syncing lyrics line-by-line or word-by-word.
 
+> synced+ is currently undergoing a design and code overhaul. Workflow should remain very similar.
+
 <br>
 
 <table>
